@@ -35,8 +35,12 @@ public class WaterCycleApp {
                 i++;
                 cmdlnfileName = arguments[i];
                 final File cmdlnfile = new File(cmdlnfileName);
-                path = cmdlnfile.getPath().substring(0, cmdlnfile.getPath().length() - cmdlnfile.getName().length());
-
+                if (cmdlnfile.isDirectory()) {
+                    path = cmdlnfile.getPath() + "/";
+                } else {
+                    path = cmdlnfile.getPath()
+                            .substring(0, cmdlnfile.getPath().length() - cmdlnfile.getName().length());
+                }
             } else if (arguments[i].equals("-o2")) {
                 i++;
                 cmdlnfileName2 = arguments[i];
