@@ -26,40 +26,35 @@ public class WaterCycleApp {
     private static WaterCycleWindow imauWindow;
 
     public static void main(String[] arguments) {
-        String cmdlnfileName = null;
-        String cmdlnfileName2 = null;
         String path = "";
 
-        for (int i = 0; i < arguments.length; i++) {
-            if (arguments[i].equals("-o")) {
-                i++;
-                cmdlnfileName = arguments[i];
-                final File cmdlnfile = new File(cmdlnfileName);
+        if (arguments.length == 1) {
+            final File cmdlnfile = new File(arguments[0]);
+            if (cmdlnfile.exists()) {
                 if (cmdlnfile.isDirectory()) {
                     path = cmdlnfile.getPath() + "/";
-                } else {
+                } else if (cmdlnfile.isFile()) {
                     path = cmdlnfile.getPath()
                             .substring(0, cmdlnfile.getPath().length() - cmdlnfile.getName().length());
+                } else {
+                    System.err.println("The given directory or file was inaccessible.");
+                    System.err.println("Usage: WaterCycleApp <directory_of_datasets>");
+                    System.exit(1);
                 }
-            } else if (arguments[i].equals("-o2")) {
-                i++;
-                cmdlnfileName2 = arguments[i];
-            } else if (arguments[i].equals("-resume")) {
-                i++;
-                WaterCycleApp.settings.setInitial_simulation_frame(Integer.parseInt(arguments[i]));
-                i++;
-                WaterCycleApp.settings.setInitial_rotation_x(Float.parseFloat(arguments[i]));
-                i++;
-                WaterCycleApp.settings.setInitial_rotation_y(Float.parseFloat(arguments[i]));
             } else {
-                cmdlnfileName = null;
-                path = System.getProperty("user.dir");
+                System.err.println("The given directory or file didnt exist.");
+                System.err.println("Usage: WaterCycleApp <directory_of_datasets>");
+                System.exit(1);
             }
+        } else {
+            System.err.println("Usage: WaterCycleApp <directory_of_datasets>");
+            System.exit(1);
         }
+
         logger.debug("PATH:" + path);
 
         // Create the Swing interface elements
-        imauPanel = new WaterCyclePanel(path, cmdlnfileName, cmdlnfileName2);
+        imauPanel = new WaterCyclePanel(path);
 
         // Create the GLEventListener
         imauWindow = new WaterCycleWindow(InputHandler.getInstance());
