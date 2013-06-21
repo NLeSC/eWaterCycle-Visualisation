@@ -25,9 +25,7 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -69,14 +67,13 @@ public class WaterCyclePanel extends ESightInterfacePanel {
 
     private static ImauTimedPlayer timer;
 
-    private File file1;
     private ArrayList<String> variables;
 
     protected GLCanvas glCanvas;
 
     private String cmdLnPath = "";
 
-    public WaterCyclePanel(String path, String cmdlnfileName, String cmdlnfileName2) {
+    public WaterCyclePanel(String path) {
         cmdLnPath = path;
         setLayout(new BorderLayout(0, 0));
 
@@ -94,107 +91,6 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         timeBar.setSnapToTicks(true);
 
         timer = new ImauTimedPlayer(timeBar, frameCounter);
-
-        // Make the menu bar
-        final JMenuBar menuBar = new JMenuBar();
-        menuBar.setLayout(new BoxLayout(menuBar, BoxLayout.X_AXIS));
-
-        final JMenu file = new JMenu("File");
-        final JMenuItem open = new JMenuItem("Open");
-        open.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-                final File file = openFile();
-                file1 = file;
-                handleFile(file);
-            }
-        });
-        file.add(open);
-        menuBar.add(file);
-
-        // final JMenuItem open2 = new JMenuItem("Open Second");
-        // open2.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent arg0) {
-        // final File file = openFile();
-        // handleFile(file1, file);
-        // }
-        // });
-        // file.add(open2);
-
-        // final JMenuItem makeMovie = new JMenuItem("Make movie.");
-        // makeMovie.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent arg0) {
-        // setTweakState(TweakState.MOVIE);
-        // }
-        // });
-        // options.add(makeMovie);
-
-        final JMenu options = new JMenu("Options");
-        final JMenuItem showDataTweakPanel = new JMenuItem("Show data configuration panel.");
-        showDataTweakPanel.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-                setTweakState(TweakState.DATA);
-            }
-        });
-        options.add(showDataTweakPanel);
-
-        // final JMenuItem showVisualTweakPanel = new JMenuItem(
-        // "Show visual configuration panel.");
-        // showVisualTweakPanel.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent arg0) {
-        // setTweakState(TweakState.VISUAL);
-        // }
-        // });
-        // options.add(showVisualTweakPanel);
-        //
-        // // a group of radio button menu items, to control output options
-        // options.addSeparator();
-        //
-        // JRadioButtonMenuItem rbMenuItem;
-        // ButtonGroup screenCountGroup = new ButtonGroup();
-        //
-        // rbMenuItem = new JRadioButtonMenuItem("2x2");
-        // rbMenuItem.setSelected(true);
-        // screenCountGroup.add(rbMenuItem);
-        // rbMenuItem.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent e) {
-        // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
-        // .getSource();
-        // item.setSelected(true);
-        //
-        // settings.setNumberOfScreens(2, 2);
-        // dataConfig.setVisible(false);
-        // createDataTweakPanel();
-        // dataConfig.setVisible(true);
-        // }
-        // });
-        // options.add(rbMenuItem);
-        //
-        // rbMenuItem = new JRadioButtonMenuItem("3x3");
-        // screenCountGroup.add(rbMenuItem);
-        // rbMenuItem.addActionListener(new ActionListener() {
-        // @Override
-        // public void actionPerformed(ActionEvent e) {
-        // JRadioButtonMenuItem item = (JRadioButtonMenuItem) e
-        // .getSource();
-        // item.setSelected(true);
-        //
-        // settings.setNumberOfScreens(3, 3);
-        // dataConfig.setVisible(false);
-        // createDataTweakPanel();
-        // dataConfig.setVisible(true);
-        // }
-        // });
-        // options.add(rbMenuItem);
-
-        menuBar.add(options);
-
-        menuBar.add(Box.createHorizontalGlue());
 
         final JMenuBar menuBar1 = new JMenuBar();
 
