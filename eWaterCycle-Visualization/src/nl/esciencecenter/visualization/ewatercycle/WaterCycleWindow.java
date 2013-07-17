@@ -117,11 +117,7 @@ public class WaterCycleWindow implements GLEventListener {
         dataSets = new MultiColorText[cachedScreens];
     }
 
-    @Override
-    public void init(GLAutoDrawable drawable) {
-        // Get the Opengl context from the drawable, and make it current, so
-        // we can see it and draw on it. I've never seen this fail, but there is
-        // error checking anyway.
+    public static void contextOn(GLAutoDrawable drawable) {
         try {
             final int status = drawable.getContext().makeCurrent();
             if ((status != GLContext.CONTEXT_CURRENT) && (status != GLContext.CONTEXT_CURRENT_NEW)) {
@@ -131,6 +127,23 @@ public class WaterCycleWindow implements GLEventListener {
             System.err.println("Exception while swapping context to onscreen.");
             e.printStackTrace();
         }
+    }
+
+    public static void contextOff(GLAutoDrawable drawable) {
+        // Release the context.
+        try {
+            drawable.getContext().release();
+        } catch (final GLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void init(GLAutoDrawable drawable) {
+        // Get the Opengl context from the drawable, and make it current, so
+        // we can see it and draw on it. I've never seen this fail, but there is
+        // error checking anyway.
+        contextOn(drawable);
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
@@ -266,6 +279,8 @@ public class WaterCycleWindow implements GLEventListener {
         // screenshots.
         finalPBO = new IntPBO(canvasWidth, canvasHeight);
         finalPBO.init(gl);
+
+        contextOff(drawable);
     }
 
     @Override
@@ -273,15 +288,7 @@ public class WaterCycleWindow implements GLEventListener {
         // Get the Opengl context from the drawable, and make it current, so
         // we can see it and draw on it. I've never seen this fail, but there is
         // error checking anyway.
-        try {
-            final int status = drawable.getContext().makeCurrent();
-            if ((status != GLContext.CONTEXT_CURRENT) && (status != GLContext.CONTEXT_CURRENT_NEW)) {
-                System.err.println("Error swapping context to onscreen.");
-            }
-        } catch (final GLException e) {
-            System.err.println("Exception while swapping context to onscreen.");
-            e.printStackTrace();
-        }
+        contextOn(drawable);
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
@@ -415,6 +422,8 @@ public class WaterCycleWindow implements GLEventListener {
         // }
 
         reshaped = false;
+
+        contextOff(drawable);
     }
 
     private void displayContext(GL3 gl, ImauTimedPlayer timer, VecF2 clickCoords) {
@@ -803,15 +812,7 @@ public class WaterCycleWindow implements GLEventListener {
         // Get the Opengl context from the drawable, and make it current, so
         // we can see it and draw on it. I've never seen this fail, but there is
         // error checking anyway.
-        try {
-            final int status = drawable.getContext().makeCurrent();
-            if ((status != GLContext.CONTEXT_CURRENT) && (status != GLContext.CONTEXT_CURRENT_NEW)) {
-                System.err.println("Error swapping context to onscreen.");
-            }
-        } catch (final GLException e) {
-            System.err.println("Exception while swapping context to onscreen.");
-            e.printStackTrace();
-        }
+        contextOn(drawable);
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
@@ -832,6 +833,8 @@ public class WaterCycleWindow implements GLEventListener {
         initDatastores(gl);
 
         reshaped = true;
+
+        contextOff(drawable);
     }
 
     @Override
@@ -840,15 +843,7 @@ public class WaterCycleWindow implements GLEventListener {
                                                   // current, so
         // we can see it and draw on it. I've never seen this fail, but there is
         // error checking anyway.
-        try {
-            final int status = drawable.getContext().makeCurrent();
-            if ((status != GLContext.CONTEXT_CURRENT) && (status != GLContext.CONTEXT_CURRENT_NEW)) {
-                System.err.println("Error swapping context to onscreen.");
-            }
-        } catch (final GLException e) {
-            System.err.println("Exception while swapping context to onscreen.");
-            e.printStackTrace();
-        }
+        contextOn(drawable);
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
@@ -863,7 +858,11 @@ public class WaterCycleWindow implements GLEventListener {
         timer.stop();
 
         // Remove shaders
-        loader.cleanup(gl);
+        try {
+            loader.cleanup(gl);
+        } catch (UninitializedException e) {
+            e.printStackTrace();
+        }
 
         // Close open files
         timer.close();
@@ -883,6 +882,8 @@ public class WaterCycleWindow implements GLEventListener {
         for (int i = 0; i < cachedScreens; i++) {
             cachedFBOs[i].delete(gl);
         }
+
+        contextOff(drawable);
     }
 
     public void makeSnapshot() {
