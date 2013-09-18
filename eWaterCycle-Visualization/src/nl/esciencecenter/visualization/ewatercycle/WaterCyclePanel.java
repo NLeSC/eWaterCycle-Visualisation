@@ -34,13 +34,13 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
 import nl.esciencecenter.esight.ESightInterfacePanel;
-import nl.esciencecenter.esight.io.netcdf.NetCDFUtil;
 import nl.esciencecenter.esight.swing.ColormapInterpreter;
 import nl.esciencecenter.esight.swing.CustomJSlider;
 import nl.esciencecenter.esight.swing.GoggleSwing;
 import nl.esciencecenter.esight.swing.RangeSlider;
 import nl.esciencecenter.esight.swing.RangeSliderUI;
 import nl.esciencecenter.visualization.ewatercycle.data.ImauTimedPlayer;
+import nl.esciencecenter.visualization.ewatercycle.data.NetCDFUtil;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
 
 import org.slf4j.Logger;
@@ -63,7 +63,7 @@ public class WaterCyclePanel extends ESightInterfacePanel {
 
     private final JPanel configPanel;
 
-    private final JPanel dataConfig, visualConfig, movieConfig;
+    private final JPanel dataConfig, movieConfig;
 
     private static ImauTimedPlayer timer;
 
@@ -120,12 +120,6 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         imaulogo.setMinimumSize(new Dimension(50, 20));
         imaulogo.setMaximumSize(new Dimension(52, 28));
 
-        // ImageIcon qrIcon = GoggleSwing.createResizedImageIcon(
-        // "images/qrcode_nlesc.png", "QR", 28, 28);
-        // JLabel qr = new JLabel(qrIcon);
-        // qr.setMinimumSize(new Dimension(20, 20));
-        // qr.setMaximumSize(new Dimension(28, 28));
-
         menuBar2.add(Box.createHorizontalGlue());
         menuBar2.add(imaulogo);
         menuBar2.add(Box.createHorizontalStrut(5));
@@ -158,31 +152,12 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         dataConfig.setMinimumSize(configPanel.getPreferredSize());
         createDataTweakPanel();
 
-        visualConfig = new JPanel();
-        // visualConfig.setLayout(new BoxLayout(visualConfig,
-        // BoxLayout.Y_AXIS));
-        // visualConfig.setMinimumSize(visualConfig.getPreferredSize());
-        // createVisualTweakPanel();
-
         movieConfig = new JPanel();
-        // movieConfig.setLayout(new BoxLayout(movieConfig, BoxLayout.Y_AXIS));
-        // movieConfig.setMinimumSize(configPanel.getPreferredSize());
-        // createMovieTweakPanel();
 
         add(bottomPanel, BorderLayout.SOUTH);
 
         // Read command line file information
         handlePresetFiles();
-        // if (cmdlnfileName != null) {
-        // if (cmdlnfileName2 != null) {
-        // final File cmdlnfile1 = new File(cmdlnfileName);
-        // final File cmdlnfile2 = new File(cmdlnfileName2);
-        // handleFile(cmdlnfile1, cmdlnfile2);
-        // } else {
-        // final File cmdlnfile = new File(cmdlnfileName);
-        // handleFile(cmdlnfile);
-        // }
-        // }
 
         setTweakState(TweakState.DATA);
 
@@ -414,14 +389,6 @@ public class WaterCyclePanel extends ESightInterfacePanel {
     private void createDataTweakPanel() {
         dataConfig.removeAll();
 
-        // final ItemListener listener = new ItemListener() {
-        // @Override
-        // public void itemStateChanged(ItemEvent arg0) {
-        // setTweakState(TweakState.NONE);
-        // }
-        // };
-        // dataConfig.add(GoggleSwing.titleBox("Configuration", listener));
-
         final ArrayList<Component> vcomponents = new ArrayList<Component>();
         JLabel windowlabel = new JLabel("Window Selection");
         windowlabel.setMaximumSize(new Dimension(200, 25));
@@ -550,43 +517,6 @@ public class WaterCyclePanel extends ESightInterfacePanel {
             dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
         }
         dataConfig.add(Box.createVerticalGlue());
-    }
-
-    private void createVisualTweakPanel() {
-        visualConfig.removeAll();
-
-        final float heightDistortionSpacing = 0.001f;
-        final JLabel heightDistortionSetting = new JLabel("" + settings.getHeightDistortion());
-        final ChangeListener heightDistortionListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                final JSlider source = (JSlider) e.getSource();
-                if (source.hasFocus()) {
-                    settings.setHeightDistortion(source.getValue() * heightDistortionSpacing);
-                    heightDistortionSetting.setText("" + settings.getHeightDistortion());
-                }
-            }
-        };
-        visualConfig.add(GoggleSwing.sliderBox("Height Distortion", heightDistortionListener,
-                settings.getHeightDistortionMin(), settings.getHeightDistortionMax(), heightDistortionSpacing,
-                settings.getHeightDistortion(), heightDistortionSetting));
-
-        // final ItemListener checkBoxListener = new ItemListener() {
-        // @Override
-        // public void itemStateChanged(ItemEvent e) {
-        // if (e.getStateChange() == ItemEvent.SELECTED) {
-        // settings.setDynamicDimensions(true);
-        // } else {
-        // settings.setDynamicDimensions(false);
-        // }
-        // timer.redraw();
-        // }
-        // };
-        // visualConfig.add(GoggleSwing.checkboxBox(
-        // "",
-        // new GoggleSwing.CheckBoxItem("Dynamic dimensions", settings
-        // .isDynamicDimensions(), checkBoxListener)));
-
     }
 
     protected void handleFile(File file1, File file2) {

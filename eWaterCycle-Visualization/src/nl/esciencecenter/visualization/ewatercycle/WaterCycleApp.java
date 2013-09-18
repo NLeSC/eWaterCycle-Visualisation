@@ -12,7 +12,6 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import nl.esciencecenter.esight.ESightNewtWindow;
-import nl.esciencecenter.esight.input.InputHandler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +56,7 @@ public class WaterCycleApp {
         imauPanel = new WaterCyclePanel(path);
 
         // Create the GLEventListener
-        imauWindow = new WaterCycleWindow(InputHandler.getInstance());
+        imauWindow = new WaterCycleWindow(WaterCycleInputHandler.getInstance());
 
         new ESightNewtWindow(true, imauWindow.getInputHandler(), imauWindow, settings.getDefaultScreenWidth(),
                 settings.getDefaultScreenHeight(), "eWaterCycle Visualization");

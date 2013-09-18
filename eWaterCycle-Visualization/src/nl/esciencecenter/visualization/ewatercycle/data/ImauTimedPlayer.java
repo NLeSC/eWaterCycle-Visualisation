@@ -218,8 +218,8 @@ public class ImauTimedPlayer implements Runnable {
             final VecF3 rotation = inputHandler.getRotation();
             final float viewDist = inputHandler.getViewDist();
 
-            System.out.println("Simulation frame: " + frameNumber + ", Rotation x: " + rotation.get(0) + " y: "
-                    + rotation.get(1) + " , viewDist: " + viewDist);
+            System.out.println("Simulation frame: " + frameNumber + ", Rotation x: " + rotation.getX() + " y: "
+                    + rotation.getY() + " , viewDist: " + viewDist);
 
             screenshotFilename = settings.getScreenshotPath() + String.format("%05d", (frameNumber)) + ".png";
         }
@@ -266,9 +266,9 @@ public class ImauTimedPlayer implements Runnable {
                                 // + settings
                                 // .getMovieRotationSpeedDef());
                                 // inputHandler.setRotation(rotation);
-                                inputHandler.setRotation(new VecF3(bezierPoints.get(frameNumber).get(0), bezierPoints
-                                        .get(frameNumber).get(1), 0f));
-                                inputHandler.setViewDist(bezierPoints.get(frameNumber).get(2));
+                                inputHandler.setRotation(new VecF3(bezierPoints.get(frameNumber).getX(), bezierPoints
+                                        .get(frameNumber).getY(), 0f));
+                                inputHandler.setViewDist(bezierPoints.get(frameNumber).getZ());
                                 setScreenshotNeeded(true);
                             } else {
                                 setScreenshotNeeded(true);

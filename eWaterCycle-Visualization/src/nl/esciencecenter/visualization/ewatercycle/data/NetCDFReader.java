@@ -113,12 +113,12 @@ public class NetCDFReader {
                     settings.getCurrentVarMax(variableName));
 
             for (int lat = 0; lat < lats; lat++) {
-                for (int lon = 0; lon < lons; lon++) {
+                for (int lon = lons - 1; lon >= 0; lon--) {
                     Color color = ColormapInterpreter.getColor(colorMapname, colormapDims, data[lat * lons + lon],
                             fillValues.get(variableName));
-                    result.put((byte) (color.red * 255));
-                    result.put((byte) (color.green * 255));
-                    result.put((byte) (color.blue * 255));
+                    result.put((byte) (color.getRed() * 255));
+                    result.put((byte) (color.getGreen() * 255));
+                    result.put((byte) (color.getBlue() * 255));
                     result.put((byte) 0);
                 }
             }

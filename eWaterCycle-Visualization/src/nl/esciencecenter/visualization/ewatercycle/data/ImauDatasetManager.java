@@ -144,14 +144,14 @@ public class ImauDatasetManager {
 
         for (int row = height - 1; row >= 0; row--) {
             float index = row / (float) height;
-            float var = (index * colormapDims.getDiff()) + colormapDims.min;
+            float var = (index * colormapDims.getDiff()) + colormapDims.getMin();
 
             Color c = ColormapInterpreter.getColor(desc.getColorMap(), colormapDims, var);
 
             for (int col = 0; col < width; col++) {
-                outBuf.put((byte) (255 * c.red));
-                outBuf.put((byte) (255 * c.green));
-                outBuf.put((byte) (255 * c.blue));
+                outBuf.put((byte) (255 * c.getRed()));
+                outBuf.put((byte) (255 * c.getGreen()));
+                outBuf.put((byte) (255 * c.getBlue()));
                 outBuf.put((byte) 0);
             }
         }

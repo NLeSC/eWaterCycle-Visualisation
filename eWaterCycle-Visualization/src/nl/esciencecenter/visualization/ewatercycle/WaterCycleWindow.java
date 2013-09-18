@@ -15,7 +15,6 @@ import javax.media.opengl.GLException;
 import nl.esciencecenter.esight.datastructures.FBO;
 import nl.esciencecenter.esight.datastructures.IntPBO;
 import nl.esciencecenter.esight.exceptions.UninitializedException;
-import nl.esciencecenter.esight.input.InputHandler;
 import nl.esciencecenter.esight.math.Color4;
 import nl.esciencecenter.esight.math.MatF4;
 import nl.esciencecenter.esight.math.MatrixFMath;
@@ -29,13 +28,12 @@ import nl.esciencecenter.esight.models.Quad;
 import nl.esciencecenter.esight.shaders.ShaderProgram;
 import nl.esciencecenter.esight.shaders.ShaderProgramLoader;
 import nl.esciencecenter.esight.text.MultiColorText;
-import nl.esciencecenter.esight.text.jogampExperimental.Font;
-import nl.esciencecenter.esight.text.jogampExperimental.FontFactory;
+import nl.esciencecenter.esight.text.jogampexperimental.Font;
+import nl.esciencecenter.esight.text.jogampexperimental.FontFactory;
 import nl.esciencecenter.esight.textures.ByteBufferTexture;
 import nl.esciencecenter.esight.textures.Texture2D;
 import nl.esciencecenter.visualization.ewatercycle.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
-import nl.esciencecenter.visualization.ewatercycle.jni.SageInterface;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +45,7 @@ public class WaterCycleWindow implements GLEventListener {
     private Quad fsq;
 
     protected final ShaderProgramLoader loader;
-    protected final InputHandler inputHandler;
+    protected final WaterCycleInputHandler inputHandler;
 
     private ShaderProgram shaderProgram_Sphere, shaderProgram_Legend, shaderProgram_Atmosphere,
             shaderProgram_GaussianBlur, shaderProgram_FlattenLayers, shaderProgram_PostProcess, shaderProgram_Text;
@@ -59,8 +57,6 @@ public class WaterCycleWindow implements GLEventListener {
     private IntPBO finalPBO;
 
     private final BufferedImage currentImage = null;
-
-    private SageInterface sage;
 
     private final int fontSize = 42;
 
@@ -101,11 +97,11 @@ public class WaterCycleWindow implements GLEventListener {
 
     // Variables needed to calculate the viewpoint and camera angle.
     final Point4 eye = new Point4((float) (radius * Math.sin(ftheta) * Math.cos(phi)), (float) (radius
-            * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)), 1.0f);
-    final Point4 at = new Point4(0.0f, 0.0f, 0.0f, 1.0f);
+            * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)));
+    final Point4 at = new Point4(0.0f, 0.0f, 0.0f);
     final VecF4 up = new VecF4(0.0f, 1.0f, 0.0f, 0.0f);
 
-    public WaterCycleWindow(InputHandler inputHandler) {
+    public WaterCycleWindow(WaterCycleInputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
         this.inputHandler = inputHandler;
         this.font = FontFactory.get(fontSet).getDefault();
@@ -258,19 +254,19 @@ public class WaterCycleWindow implements GLEventListener {
         inputHandler.setViewDist(-130f);
 
         for (int i = 0; i < cachedScreens; i++) {
-            varNames[i] = new MultiColorText(gl, font, "test1", Color4.white, fontSize);
+            varNames[i] = new MultiColorText(gl, font, "test1", Color4.WHITE, fontSize);
             varNames[i].init(gl);
 
-            legendTextsMin[i] = new MultiColorText(gl, font, "test1", Color4.white, fontSize);
+            legendTextsMin[i] = new MultiColorText(gl, font, "test1", Color4.WHITE, fontSize);
             legendTextsMin[i].init(gl);
 
-            legendTextsMax[i] = new MultiColorText(gl, font, "test1", Color4.white, fontSize);
+            legendTextsMax[i] = new MultiColorText(gl, font, "test1", Color4.WHITE, fontSize);
             legendTextsMax[i].init(gl);
 
-            dates[i] = new MultiColorText(gl, font, "test1", Color4.white, fontSize);
+            dates[i] = new MultiColorText(gl, font, "test1", Color4.WHITE, fontSize);
             dates[i].init(gl);
 
-            dataSets[i] = new MultiColorText(gl, font, "test1", Color4.white, fontSize);
+            dataSets[i] = new MultiColorText(gl, font, "test1", Color4.WHITE, fontSize);
             dataSets[i].init(gl);
 
         }
@@ -311,9 +307,9 @@ public class WaterCycleWindow implements GLEventListener {
 
         // Rotate tha camera according to the rotation angles defined in the
         // inputhandler.
-        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationX(inputHandler.getRotation().get(0)));
-        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationY(inputHandler.getRotation().get(1)));
-        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationZ(inputHandler.getRotation().get(2)));
+        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationX(inputHandler.getRotation().getX()));
+        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationY(inputHandler.getRotation().getY()));
+        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationZ(inputHandler.getRotation().getZ()));
 
         ImauTimedPlayer timer = WaterCyclePanel.getTimer();
         if (timer.isInitialized()) {
@@ -430,14 +426,14 @@ public class WaterCycleWindow implements GLEventListener {
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
         final Point4 eye = new Point4((float) (radius * Math.sin(ftheta) * Math.cos(phi)), (float) (radius
-                * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)), 1.0f);
-        final Point4 at = new Point4(0.0f, 0.0f, 0.0f, 1.0f);
+                * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)));
+        final Point4 at = new Point4(0.0f, 0.0f, 0.0f);
         final VecF4 up = new VecF4(0.0f, 1.0f, 0.0f, 0.0f);
 
         MatF4 mv = MatrixFMath.lookAt(eye, at, up);
         mv = mv.mul(MatrixFMath.translate(new VecF3(0f, 0f, inputHandler.getViewDist())));
-        mv = mv.mul(MatrixFMath.rotationX(inputHandler.getRotation().get(0)));
-        mv = mv.mul(MatrixFMath.rotationY(inputHandler.getRotation().get(1)));
+        mv = mv.mul(MatrixFMath.rotationX(inputHandler.getRotation().getX()));
+        mv = mv.mul(MatrixFMath.rotationY(inputHandler.getRotation().getY()));
 
         drawAtmosphere(gl, mv, atmosphereFBO);
         // blur(gl, atmosphereFBO, fsq, 1, 2, 4);
@@ -455,7 +451,7 @@ public class WaterCycleWindow implements GLEventListener {
                 String fancyName = variableName;
                 // String units = timer.getVariableUnits(variableName);
                 // fancyName += " in " + units;
-                varNames[i].setString(gl, fancyName, Color4.white, fontSize);
+                varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
 
                 String min, max;
                 if (currentDesc.isDiff()) {
@@ -465,10 +461,10 @@ public class WaterCycleWindow implements GLEventListener {
                     min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
                     max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
                 }
-                dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.white, fontSize);
-                dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.white, fontSize);
-                legendTextsMin[i].setString(gl, min, Color4.white, fontSize);
-                legendTextsMax[i].setString(gl, max, Color4.white, fontSize);
+                dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.WHITE, fontSize);
+                dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
+                legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
+                legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
 
                 cachedTextureDescriptions[i] = currentDesc;
 
@@ -536,8 +532,8 @@ public class WaterCycleWindow implements GLEventListener {
             // Draw text
             int textLength = varNames[windowIndex].toString().length() * fontSize;
 
-            varNames[windowIndex].draw(gl, shaderProgram_Text, canvasWidth, canvasHeight, 2 * canvasWidth - textLength
-                    - 150, 40);
+            varNames[windowIndex].drawHudRelative(gl, shaderProgram_Text, canvasWidth, canvasHeight, 2 * canvasWidth
+                    - textLength - 150, 40);
 
             // textLength = dataSets[windowIndex].toString().length() *
             // fontSize;
@@ -545,15 +541,15 @@ public class WaterCycleWindow implements GLEventListener {
             // canvasHeight, 10, 1.9f * canvasHeight);
 
             textLength = dates[windowIndex].toString().length() * fontSize;
-            dates[windowIndex].draw(gl, shaderProgram_Text, canvasWidth, canvasHeight, 10, 40);
+            dates[windowIndex].drawHudRelative(gl, shaderProgram_Text, canvasWidth, canvasHeight, 10, 40);
 
             textLength = legendTextsMin[windowIndex].toString().length() * fontSize;
-            legendTextsMin[windowIndex].draw(gl, shaderProgram_Text, canvasWidth, canvasHeight, 2 * canvasWidth
-                    - textLength - 100, .2f * canvasHeight);
+            legendTextsMin[windowIndex].drawHudRelative(gl, shaderProgram_Text, canvasWidth, canvasHeight, 2
+                    * canvasWidth - textLength - 100, .2f * canvasHeight);
 
             textLength = legendTextsMax[windowIndex].toString().length() * fontSize;
-            legendTextsMax[windowIndex].draw(gl, shaderProgram_Text, canvasWidth, canvasHeight, 2 * canvasWidth
-                    - textLength - 100, 1.75f * canvasHeight);
+            legendTextsMax[windowIndex].drawHudRelative(gl, shaderProgram_Text, canvasWidth, canvasHeight, 2
+                    * canvasWidth - textLength - 100, 1.75f * canvasHeight);
 
             target.unBind(gl);
         } catch (UninitializedException e) {
@@ -587,7 +583,7 @@ public class WaterCycleWindow implements GLEventListener {
 
             final MatF4 p = MatrixFMath.perspective(fovy, aspect, zNear, zFar);
 
-            shaderProgram_Sphere.setUniformMatrix("MVMatrix", mv.clone());
+            shaderProgram_Sphere.setUniformMatrix("MVMatrix", new MatF4(mv));
             shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
 
             shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
@@ -607,7 +603,7 @@ public class WaterCycleWindow implements GLEventListener {
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
             final MatF4 p = MatrixFMath.perspective(fovy, aspect, zNear, zFar);
-            shaderProgram_Atmosphere.setUniformMatrix("MVMatrix", mv.clone());
+            shaderProgram_Atmosphere.setUniformMatrix("MVMatrix", new MatF4(mv));
             shaderProgram_Atmosphere.setUniformMatrix("PMatrix", p);
             shaderProgram_Atmosphere.setUniformMatrix("NormalMatrix", MatrixFMath.getNormalMatrix(mv));
 
@@ -921,7 +917,7 @@ public class WaterCycleWindow implements GLEventListener {
         return result;
     }
 
-    public InputHandler getInputHandler() {
+    public WaterCycleInputHandler getInputHandler() {
         return inputHandler;
     }
 }

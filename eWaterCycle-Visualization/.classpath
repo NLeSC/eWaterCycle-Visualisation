@@ -12,15 +12,6 @@
 	<classpathentry kind="lib" path="lib/jogl/gluegen-rt-natives-windows-amd64.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/gluegen-rt-natives-windows-i586.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/gluegen-rt.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/gluegen.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl-natives-linux-amd64.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl-natives-linux-i586.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl-natives-macosx-universal.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl-natives-solaris-amd64.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl-natives-solaris-i586.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl-natives-windows-amd64.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl-natives-windows-i586.jar"/>
-	<classpathentry kind="lib" path="lib/jogl/jocl.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/jogl-all-natives-linux-amd64.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/jogl-all-natives-linux-i586.jar"/>
 	<classpathentry kind="lib" path="lib/jogl/jogl-all-natives-macosx-universal.jar"/>
