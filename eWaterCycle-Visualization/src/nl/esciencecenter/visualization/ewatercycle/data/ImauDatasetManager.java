@@ -21,8 +21,7 @@ public class ImauDatasetManager {
     private final ArrayList<String> availableVariables;
 
     private final NetCDFReader ncr1;
-    private NetCDFReader ncrSnowCoverSWE, ncrStorUpp000005, ncrStorUpp005030, ncrStorLow030150;
-    private NetCDFReader ncrSatDegUpp000005, ncrSatDegUpp005030, ncrSatDegLow030150, ncrPrecipitation, ncrTemperature;
+    private NetCDFReader ncrDischarge, ncrgwRecharge, ncrsatDegUpp, ncrsatDegLow;
 
     private final TextureStorage texStorage;
 
@@ -49,51 +48,38 @@ public class ImauDatasetManager {
 
     }
 
-    public ImauDatasetManager(File discharge, File snowCoverSWE, File storUpp000005, File storUpp005030,
-            File storLow030150, File satDegUpp000005, File satDegUpp005030, File satDegLow030150, File precipitation,
-            File temperature) {
+    public ImauDatasetManager(File discharge, File gwRecharge, File satDegUpp, File satDegLow) {
         ncr1 = new NetCDFReader(discharge);
-        ncrSnowCoverSWE = new NetCDFReader(snowCoverSWE);
-        ncrStorUpp000005 = new NetCDFReader(storUpp000005);
-        ncrStorUpp005030 = new NetCDFReader(storUpp005030);
-        ncrStorLow030150 = new NetCDFReader(storLow030150);
-        ncrSatDegUpp000005 = new NetCDFReader(satDegUpp000005);
-        ncrSatDegUpp005030 = new NetCDFReader(satDegUpp005030);
-        ncrSatDegLow030150 = new NetCDFReader(satDegLow030150);
-        ncrPrecipitation = new NetCDFReader(precipitation);
-        ncrTemperature = new NetCDFReader(temperature);
+        
+        ncrgwRecharge = new NetCDFReader(gwRecharge);
+        ncrsatDegUpp = new NetCDFReader(satDegUpp);
+        ncrsatDegLow = new NetCDFReader(satDegLow);
 
         availableFrameSequenceNumbers = new ArrayList<Integer>();
 
         for (int i = 0; i < ncr1.getAvailableFrames(); i++) {
-            if (i < ncrSnowCoverSWE.getAvailableFrames() && i < ncrStorUpp000005.getAvailableFrames()
-                    && i < ncrStorUpp005030.getAvailableFrames() && i < ncrStorLow030150.getAvailableFrames()) {
+            if (i < ncrDischarge.getAvailableFrames() && i < ncrgwRecharge.getAvailableFrames()
+                    && i < ncrsatDegUpp.getAvailableFrames() && i < ncrsatDegLow.getAvailableFrames()) {
                 availableFrameSequenceNumbers.add(i);
             }
         }
         availableVariables = new ArrayList<String>();
         availableVariables.add("discharge");
-        availableVariables.add("snowCoverSWE");
-        availableVariables.add("storUpp000005");
-        availableVariables.add("storUpp005030");
-        availableVariables.add("storLow030150");
-        availableVariables.add("satDegUpp000005");
-        availableVariables.add("satDegUpp005030");
-        availableVariables.add("satDegLow030150");
-        availableVariables.add("precipitation");
-        availableVariables.add("temperature");
+        availableVariables.add("gwRecharge");
+        availableVariables.add("satDegUpp");
+        availableVariables.add("satDegLow");
 
         latArraySize = ncr1.getLatSize();
 
-        if (latArraySize != ncrSnowCoverSWE.getLatSize() || latArraySize != ncrStorUpp000005.getLatSize()
-                || latArraySize != ncrStorUpp005030.getLatSize() || latArraySize != ncrStorLow030150.getLatSize()) {
+        if (latArraySize != ncrDischarge.getLatSize() || latArraySize != ncrgwRecharge.getLatSize()
+                || latArraySize != ncrsatDegUpp.getLatSize() || latArraySize != ncrsatDegLow.getLatSize()) {
             logger.debug("LAT ARRAY SIZES NOT EQUAL");
         }
 
         lonArraySize = ncr1.getLonSize();
 
-        if (lonArraySize != ncrSnowCoverSWE.getLonSize() || lonArraySize != ncrStorUpp000005.getLonSize()
-                || lonArraySize != ncrStorUpp005030.getLonSize() || lonArraySize != ncrStorLow030150.getLonSize()) {
+        if (lonArraySize != ncrDischarge.getLonSize() || lonArraySize != ncrgwRecharge.getLonSize()
+                || lonArraySize != ncrsatDegUpp.getLonSize() || lonArraySize != ncrsatDegLow.getLonSize()) {
             logger.debug("LON ARRAY SIZES NOT EQUAL");
         }
 
@@ -109,24 +95,12 @@ public class ImauDatasetManager {
         NetCDFReader currentReader = ncr1;
         if (varName.compareTo("discharge") == 0) {
             currentReader = ncr1;
-        } else if (varName.compareTo("snowCoverSWE") == 0) {
-            currentReader = ncrSnowCoverSWE;
-        } else if (varName.compareTo("storUpp000005") == 0) {
-            currentReader = ncrStorUpp000005;
-        } else if (varName.compareTo("storUpp005030") == 0) {
-            currentReader = ncrStorUpp005030;
-        } else if (varName.compareTo("storLow030150") == 0) {
-            currentReader = ncrStorLow030150;
-        } else if (varName.compareTo("satDegUpp000005") == 0) {
-            currentReader = ncrSatDegUpp000005;
-        } else if (varName.compareTo("satDegUpp005030") == 0) {
-            currentReader = ncrSatDegUpp005030;
-        } else if (varName.compareTo("satDegLow030150") == 0) {
-            currentReader = ncrSatDegLow030150;
-        } else if (varName.compareTo("precipitation") == 0) {
-            currentReader = ncrPrecipitation;
-        } else if (varName.compareTo("temperature") == 0) {
-            currentReader = ncrTemperature;
+        } else if (varName.compareTo("gwRecharge") == 0) {
+            currentReader = ncrgwRecharge;
+        } else if (varName.compareTo("satDegUpp") == 0) {
+            currentReader = ncrsatDegUpp;
+        } else if (varName.compareTo("satDegLow") == 0) {
+            currentReader = ncrsatDegLow;
         }
 
         if (frameNumber < 0 || frameNumber > currentReader.getAvailableFrames(varName)) {

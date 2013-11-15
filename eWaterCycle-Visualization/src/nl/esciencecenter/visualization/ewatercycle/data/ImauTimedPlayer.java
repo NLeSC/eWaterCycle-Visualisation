@@ -52,8 +52,7 @@ public class ImauTimedPlayer implements Runnable {
     private File fileDS1;
     private File fileDS2;
 
-    private File discharge, snowCoverSWE, storUpp000005, storUpp005030, storLow030150, satDegUpp000005,
-            satDegUpp005030, satDegLow030150, precipitation, temperature;
+    private File discharge, gwRecharge, satDegUpp, satDegLow;
 
     public ImauTimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
@@ -126,21 +125,14 @@ public class ImauTimedPlayer implements Runnable {
         initialized = true;
     }
 
-    public void init(File discharge, File snowCoverSWE, File storUpp000005, File storUpp005030, File storLow030150,
-            File satDegUpp000005, File satDegUpp005030, File satDegLow030150, File precipitation, File temperature) {
+    
+    public void init(File discharge, File gwRecharge, File satDegUpp, File satDegLow) {
         this.discharge = discharge;
-        this.snowCoverSWE = snowCoverSWE;
-        this.storUpp000005 = storUpp000005;
-        this.storUpp005030 = storUpp005030;
-        this.storLow030150 = storLow030150;
-        this.satDegUpp000005 = satDegUpp000005;
-        this.satDegUpp005030 = satDegUpp005030;
-        this.satDegLow030150 = satDegLow030150;
-        this.precipitation = precipitation;
-        this.temperature = temperature;
-
-        this.dsManager = new ImauDatasetManager(discharge, snowCoverSWE, storUpp000005, storUpp005030, storLow030150,
-                satDegUpp000005, satDegUpp005030, satDegLow030150, precipitation, temperature);
+        this.gwRecharge = gwRecharge;
+        this.satDegUpp = satDegUpp;
+        this.satDegLow = satDegLow;
+        
+        this.dsManager = new ImauDatasetManager(discharge, gwRecharge, satDegUpp, satDegLow);
         this.texStorage = dsManager.getTextureStorage();
 
         frameNumber = dsManager.getFrameNumberOfIndex(0);

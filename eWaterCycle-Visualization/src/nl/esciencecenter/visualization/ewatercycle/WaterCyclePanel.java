@@ -553,27 +553,26 @@ public class WaterCyclePanel extends ESightInterfacePanel {
     }
 
     protected void handlePresetFiles() {
-        File discharge = new File(cmdLnPath + "discharge_daily2000.nc");
-        File snowCoverSWE = new File(cmdLnPath + "snowCoverSWE_daily2000.nc");
+        File discharge = new File(cmdLnPath + "disChanWaterBody_monthAvg.nc");
+        
+        File gwRecharge = new File(cmdLnPath + "gwRecharge_monthAvg.nc");
 
-        File storUpp000005 = new File(cmdLnPath + "storUpp000005_daily2000.nc");
-        File storUpp005030 = new File(cmdLnPath + "storUpp005030_daily2000.nc");
-        File storLow030150 = new File(cmdLnPath + "storLow030150_daily2000.nc");
+//        File storUpp000005 = new File(cmdLnPath + "storUpp000005_daily2000.nc");
+//        File storUpp005030 = new File(cmdLnPath + "storUpp005030_daily2000.nc");
+//        File storLow030150 = new File(cmdLnPath + "storLow030150_daily2000.nc");
 
-        File satDegUpp000005 = new File(cmdLnPath + "satDegUpp000005_daily2000.nc");
-        File satDegUpp005030 = new File(cmdLnPath + "satDegUpp005030_daily2000.nc");
-        File satDegLow030150 = new File(cmdLnPath + "satDegLow030150_daily2000.nc");
+        File satDegUpp = new File(cmdLnPath + "satDegUpp_monthEnd.nc");
+        File satDegLow = new File(cmdLnPath + "satDegLow_monthEnd.nc");
 
-        File precipitation2 = new File(cmdLnPath + "precipitation2000.nc");
-        File temperature2 = new File(cmdLnPath + "temperature2000.nc");
+//        File precipitation2 = new File(cmdLnPath + "precipitation2000.nc");
+//        File temperature2 = new File(cmdLnPath + "temperature2000.nc");
 
         if (timer.isInitialized()) {
             timer.close();
         }
         timer = new ImauTimedPlayer(timeBar, frameCounter);
 
-        timer.init(discharge, snowCoverSWE, storUpp000005, storUpp005030, storLow030150, satDegUpp000005,
-                satDegUpp005030, satDegLow030150, precipitation2, temperature2);
+        timer.init(discharge, gwRecharge, satDegUpp, satDegLow);
         new Thread(timer).start();
 
         variables = new ArrayList<String>();
