@@ -21,7 +21,7 @@ public class ImauDatasetManager {
     private final ArrayList<String> availableVariables;
 
     private final NetCDFReader ncr1;
-    private NetCDFReader ncrDischarge, ncrgwRecharge, ncrsatDegUpp, ncrsatDegLow;
+    private NetCDFReader ncrgwRecharge, ncrsatDegUpp, ncrsatDegLow;
 
     private final TextureStorage texStorage;
 
@@ -58,7 +58,7 @@ public class ImauDatasetManager {
         availableFrameSequenceNumbers = new ArrayList<Integer>();
 
         for (int i = 0; i < ncr1.getAvailableFrames(); i++) {
-            if (i < ncrDischarge.getAvailableFrames() && i < ncrgwRecharge.getAvailableFrames()
+            if (i < ncrgwRecharge.getAvailableFrames()
                     && i < ncrsatDegUpp.getAvailableFrames() && i < ncrsatDegLow.getAvailableFrames()) {
                 availableFrameSequenceNumbers.add(i);
             }
@@ -71,14 +71,14 @@ public class ImauDatasetManager {
 
         latArraySize = ncr1.getLatSize();
 
-        if (latArraySize != ncrDischarge.getLatSize() || latArraySize != ncrgwRecharge.getLatSize()
+        if (latArraySize != ncrgwRecharge.getLatSize()
                 || latArraySize != ncrsatDegUpp.getLatSize() || latArraySize != ncrsatDegLow.getLatSize()) {
             logger.debug("LAT ARRAY SIZES NOT EQUAL");
         }
 
         lonArraySize = ncr1.getLonSize();
 
-        if (lonArraySize != ncrDischarge.getLonSize() || lonArraySize != ncrgwRecharge.getLonSize()
+        if (lonArraySize != ncrgwRecharge.getLonSize()
                 || lonArraySize != ncrsatDegUpp.getLonSize() || lonArraySize != ncrsatDegLow.getLonSize()) {
             logger.debug("LON ARRAY SIZES NOT EQUAL");
         }
