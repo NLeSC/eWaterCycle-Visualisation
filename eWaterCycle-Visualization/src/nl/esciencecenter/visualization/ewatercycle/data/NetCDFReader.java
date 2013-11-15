@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -75,7 +76,7 @@ public class NetCDFReader {
     }
 
     public int getLatSize() {
-        logger.debug("shape keys:" + shapes.keySet().toArray(new String[0]));
+        logger.debug("shape keys:" + Arrays.toString(shapes.keySet().toArray(new String[0])));
         return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(1);
     }
 
