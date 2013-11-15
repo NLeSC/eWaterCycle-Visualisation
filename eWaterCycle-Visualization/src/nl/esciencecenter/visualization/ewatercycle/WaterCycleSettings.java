@@ -344,7 +344,7 @@ public class WaterCycleSettings {
             diffMaxValues.put("gwRecharge", props.getFloatProperty("DIFF_MAX_gwRecharge"));
             currentDiffMinValues.put("gwRecharge", props.getFloatProperty("SET_DIFF_MIN_gwRecharge"));
             currentDiffMaxValues.put("gwRecharge", props.getFloatProperty("SET_DIFF_MAX_gwRecharge"));
-            currentColormap.put("gwRecharge", "hotres");
+            currentColormap.put("gwRecharge", "diff");
 
 
             // grid_width_dimension_substring = props
