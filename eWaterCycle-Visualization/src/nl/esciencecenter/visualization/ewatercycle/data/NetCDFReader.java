@@ -36,6 +36,17 @@ public class NetCDFReader {
     private final HashMap<String, List<Integer>> shapes;
     private final HashMap<String, Float> fillValues;
 
+    private final String variableName;
+    
+    private static String firstVariable(String[] variableNames) {
+        for (String variable: variableNames) {
+            if (!variable.equals("lon") && !variable.equals("lat") && !variable.equals("time") && !variable.equals("longitude") && !variable.equals("latitude")) {
+                return variable;
+            }
+        }
+        return null;
+    }
+    
     public NetCDFReader(File file) {
         this.ncfile = open(file);
 
@@ -51,7 +62,7 @@ public class NetCDFReader {
             variables.put(name, v);
             units.put(name, v.getUnitsString());
             dimensions.put(name, v.getDimensions());
-
+            
             ArrayList<Integer> shape = new ArrayList<Integer>();
             for (int i : v.getShape()) {
                 shape.add(i);
@@ -65,6 +76,8 @@ public class NetCDFReader {
                 }
             }
         }
+        
+        variableName = firstVariable(shapes.keySet().toArray(new String[0]));
     }
 
     public int getAvailableFrames(String varName) {
@@ -72,16 +85,16 @@ public class NetCDFReader {
     }
 
     public int getAvailableFrames() {
-        return shapes.get(shapes.keySet().toArray(new String[] {})[3]).get(0);
+        return shapes.get(variableName).get(0);
     }
 
     public int getLatSize() {
-        logger.debug("shape keys:" + Arrays.toString(shapes.keySet().toArray(new String[0])));
-        return shapes.get(shapes.keySet().toArray(new String[] {})[3]).get(1);
+        logger.debug("variable name: " + variableName);
+        return shapes.get(variableName).get(1);
     }
 
     public int getLonSize() {
-        return shapes.get(shapes.keySet().toArray(new String[] {})[3]).get(2);
+        return shapes.get(variableName).get(2);
     }
 
     public ArrayList<String> getVariableNames() {
