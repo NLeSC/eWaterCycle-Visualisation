@@ -64,8 +64,8 @@ public class ImauDatasetManager {
             }
         }
         availableVariables = new ArrayList<String>();
-        availableVariables.add("discharge");
-        availableVariables.add("recharge");
+        availableVariables.add("disChanWaterBody");
+        availableVariables.add("gwRecharge");
         availableVariables.add("satDegUpp");
         availableVariables.add("satDegLow");
 
@@ -93,7 +93,7 @@ public class ImauDatasetManager {
         String varName = desc.getVarName();
 
         NetCDFReader currentReader = ncr1;
-        if (varName.compareTo("discharge") == 0) {
+        if (varName.compareTo("disChanWaterBody") == 0) {
             currentReader = ncr1;
         } else if (varName.compareTo("gwRecharge") == 0) {
             currentReader = ncrRecharge;

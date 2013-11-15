@@ -306,15 +306,15 @@ public class WaterCycleSettings {
             currentDiffMaxValues.put("H2", props.getFloatProperty("SET_DIFF_MAX_H2"));
 
             // eWaterCycle
-            minValues.put("discharge", props.getFloatProperty("MIN_discharge"));
-            maxValues.put("discharge", props.getFloatProperty("MAX_discharge"));
-            currentMinValues.put("discharge", props.getFloatProperty("SET_MIN_discharge"));
-            currentMaxValues.put("discharge", props.getFloatProperty("SET_MAX_discharge"));
-            diffMinValues.put("discharge", props.getFloatProperty("DIFF_MIN_discharge"));
-            diffMaxValues.put("discharge", props.getFloatProperty("DIFF_MAX_discharge"));
-            currentDiffMinValues.put("discharge", props.getFloatProperty("SET_DIFF_MIN_discharge"));
-            currentDiffMaxValues.put("discharge", props.getFloatProperty("SET_DIFF_MAX_discharge"));
-            currentColormap.put("discharge", "realistic");
+            minValues.put("disChanWaterBody", props.getFloatProperty("MIN_disChanWaterBody"));
+            maxValues.put("disChanWaterBody", props.getFloatProperty("MAX_disChanWaterBody"));
+            currentMinValues.put("disChanWaterBody", props.getFloatProperty("SET_MIN_disChanWaterBody"));
+            currentMaxValues.put("disChanWaterBody", props.getFloatProperty("SET_MAX_disChanWaterBody"));
+            diffMinValues.put("disChanWaterBody", props.getFloatProperty("DIFF_MIN_disChanWaterBody"));
+            diffMaxValues.put("disChanWaterBody", props.getFloatProperty("DIFF_MAX_disChanWaterBody"));
+            currentDiffMinValues.put("disChanWaterBody", props.getFloatProperty("SET_DIFF_MIN_disChanWaterBody"));
+            currentDiffMaxValues.put("disChanWaterBody", props.getFloatProperty("SET_DIFF_MAX_disChanWaterBody"));
+            currentColormap.put("disChanWaterBody", "realistic");
 
             minValues.put("satDegUpp", props.getFloatProperty("MIN_satDegUpp"));
             maxValues.put("satDegUpp", props.getFloatProperty("MAX_satDegUpp"));
@@ -336,15 +336,15 @@ public class WaterCycleSettings {
             currentDiffMaxValues.put("satDegLow", props.getFloatProperty("SET_DIFF_MAX_satDegLow"));
             currentColormap.put("satDegLow", "moisture");
 
-            minValues.put("recharge", props.getFloatProperty("MIN_recharge"));
-            maxValues.put("recharge", props.getFloatProperty("MAX_recharge"));
-            currentMinValues.put("recharge", props.getFloatProperty("SET_MIN_recharge"));
-            currentMaxValues.put("recharge", props.getFloatProperty("SET_MAX_recharge"));
-            diffMinValues.put("recharge", props.getFloatProperty("DIFF_MIN_recharge"));
-            diffMaxValues.put("recharge", props.getFloatProperty("DIFF_MAX_recharge"));
-            currentDiffMinValues.put("recharge", props.getFloatProperty("SET_DIFF_MIN_recharge"));
-            currentDiffMaxValues.put("recharge", props.getFloatProperty("SET_DIFF_MAX_recharge"));
-            currentColormap.put("recharge", "hotres");
+            minValues.put("gwRecharge", props.getFloatProperty("MIN_gwRecharge"));
+            maxValues.put("gwRecharge", props.getFloatProperty("MAX_gwRecharge"));
+            currentMinValues.put("gwRecharge", props.getFloatProperty("SET_MIN_gwRecharge"));
+            currentMaxValues.put("gwRecharge", props.getFloatProperty("SET_MAX_gwRecharge"));
+            diffMinValues.put("gwRecharge", props.getFloatProperty("DIFF_MIN_gwRecharge"));
+            diffMaxValues.put("gwRecharge", props.getFloatProperty("DIFF_MAX_gwRecharge"));
+            currentDiffMinValues.put("gwRecharge", props.getFloatProperty("SET_DIFF_MIN_gwRecharge"));
+            currentDiffMaxValues.put("gwRecharge", props.getFloatProperty("SET_DIFF_MAX_gwRecharge"));
+            currentColormap.put("gwRecharge", "hotres");
 
 
             // grid_width_dimension_substring = props
@@ -398,15 +398,15 @@ public class WaterCycleSettings {
             // Set the default variables on screen
             String var = "";
             if (i == 0) {
-                var = "discharge";
+                var = "disChanWaterBody";
             } else if (i == 1) {
-                var = "recharge";
+                var = "gwRecharge";
             } else if (i == 2) {
                 var = "satDegUpp";
             } else if (i == 3) {
                 var = "satDegLow";
             } else {
-                var = "discharge";
+                var = "disChanWaterBody";
             }
             
             logger.debug("current i: " + i);
