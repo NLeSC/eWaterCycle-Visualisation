@@ -21,7 +21,7 @@ public class ImauDatasetManager {
     private final ArrayList<String> availableVariables;
 
     private final NetCDFReader ncr1;
-    private NetCDFReader ncrgwRecharge, ncrsatDegUpp, ncrsatDegLow;
+    private NetCDFReader ncrRecharge, ncrsatDegUpp, ncrsatDegLow;
 
     private final TextureStorage texStorage;
 
@@ -48,37 +48,37 @@ public class ImauDatasetManager {
 
     }
 
-    public ImauDatasetManager(File discharge, File gwRecharge, File satDegUpp, File satDegLow) {
+    public ImauDatasetManager(File discharge, File recharge, File satDegUpp, File satDegLow) {
         ncr1 = new NetCDFReader(discharge);
         
-        ncrgwRecharge = new NetCDFReader(gwRecharge);
+        ncrRecharge = new NetCDFReader(recharge);
         ncrsatDegUpp = new NetCDFReader(satDegUpp);
         ncrsatDegLow = new NetCDFReader(satDegLow);
 
         availableFrameSequenceNumbers = new ArrayList<Integer>();
 
         for (int i = 0; i < ncr1.getAvailableFrames(); i++) {
-            if (i < ncrgwRecharge.getAvailableFrames()
+            if (i < ncrRecharge.getAvailableFrames()
                     && i < ncrsatDegUpp.getAvailableFrames() && i < ncrsatDegLow.getAvailableFrames()) {
                 availableFrameSequenceNumbers.add(i);
             }
         }
         availableVariables = new ArrayList<String>();
         availableVariables.add("discharge");
-        availableVariables.add("gwRecharge");
+        availableVariables.add("recharge");
         availableVariables.add("satDegUpp");
         availableVariables.add("satDegLow");
 
         latArraySize = ncr1.getLatSize();
 
-        if (latArraySize != ncrgwRecharge.getLatSize()
+        if (latArraySize != ncrRecharge.getLatSize()
                 || latArraySize != ncrsatDegUpp.getLatSize() || latArraySize != ncrsatDegLow.getLatSize()) {
             logger.debug("LAT ARRAY SIZES NOT EQUAL");
         }
 
         lonArraySize = ncr1.getLonSize();
 
-        if (lonArraySize != ncrgwRecharge.getLonSize()
+        if (lonArraySize != ncrRecharge.getLonSize()
                 || lonArraySize != ncrsatDegUpp.getLonSize() || lonArraySize != ncrsatDegLow.getLonSize()) {
             logger.debug("LON ARRAY SIZES NOT EQUAL");
         }
@@ -96,7 +96,7 @@ public class ImauDatasetManager {
         if (varName.compareTo("discharge") == 0) {
             currentReader = ncr1;
         } else if (varName.compareTo("gwRecharge") == 0) {
-            currentReader = ncrgwRecharge;
+            currentReader = ncrRecharge;
         } else if (varName.compareTo("satDegUpp") == 0) {
             currentReader = ncrsatDegUpp;
         } else if (varName.compareTo("satDegLow") == 0) {

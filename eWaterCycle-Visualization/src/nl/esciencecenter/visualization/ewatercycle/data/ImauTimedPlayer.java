@@ -52,7 +52,7 @@ public class ImauTimedPlayer implements Runnable {
     private File fileDS1;
     private File fileDS2;
 
-    private File discharge, gwRecharge, satDegUpp, satDegLow;
+    private File discharge, recharge, satDegUpp, satDegLow;
 
     public ImauTimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
@@ -126,13 +126,13 @@ public class ImauTimedPlayer implements Runnable {
     }
 
     
-    public void init(File discharge, File gwRecharge, File satDegUpp, File satDegLow) {
+    public void init(File discharge, File recharge, File satDegUpp, File satDegLow) {
         this.discharge = discharge;
-        this.gwRecharge = gwRecharge;
+        this.recharge = recharge;
         this.satDegUpp = satDegUpp;
         this.satDegLow = satDegLow;
         
-        this.dsManager = new ImauDatasetManager(discharge, gwRecharge, satDegUpp, satDegLow);
+        this.dsManager = new ImauDatasetManager(discharge, recharge, satDegUpp, satDegLow);
         this.texStorage = dsManager.getTextureStorage();
 
         frameNumber = dsManager.getFrameNumberOfIndex(0);

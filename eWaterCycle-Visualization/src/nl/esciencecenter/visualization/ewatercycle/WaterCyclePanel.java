@@ -555,7 +555,7 @@ public class WaterCyclePanel extends ESightInterfacePanel {
     protected void handlePresetFiles() {
         File discharge = new File(cmdLnPath + "disChanWaterBody_monthAvg.nc");
         
-        File gwRecharge = new File(cmdLnPath + "gwRecharge_monthAvg.nc");
+        File recharge = new File(cmdLnPath + "gwRecharge_monthAvg.nc");
 
 //        File storUpp000005 = new File(cmdLnPath + "storUpp000005_daily2000.nc");
 //        File storUpp005030 = new File(cmdLnPath + "storUpp005030_daily2000.nc");
@@ -572,7 +572,7 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         }
         timer = new ImauTimedPlayer(timeBar, frameCounter);
 
-        timer.init(discharge, gwRecharge, satDegUpp, satDegLow);
+        timer.init(discharge, recharge, satDegUpp, satDegLow);
         new Thread(timer).start();
 
         variables = new ArrayList<String>();

@@ -400,14 +400,15 @@ public class WaterCycleSettings {
             if (i == 0) {
                 var = "discharge";
             } else if (i == 1) {
-                var = "snowCoverSWE";
+                var = "recharge";
             } else if (i == 2) {
-                var = "satDegUpp000005";
+                var = "satDegUpp";
             } else if (i == 3) {
-                var = "satDegLow030150";
+                var = "satDegLow";
             } else {
-                var = "snowCoverSWE";
+                var = null;
             }
+            
             screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
                     currentColormap.get(var), false, false, false, currentMinValues.get(var), currentMaxValues.get(var));
 
