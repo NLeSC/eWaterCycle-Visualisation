@@ -409,9 +409,10 @@ public class WaterCycleSettings {
                 var = "discharge";
             }
             
-            currentColormap.get(var);
-            currentMinValues.get(var);
-            currentMaxValues.get(var);
+            logger.debug("current var: " + currentColormap.get(var));
+            logger.debug("current color map: " + currentColormap.get(var));
+            logger.debug("current min valye: " + currentMinValues.get(var));
+            logger.debug("current max value: " + currentMaxValues.get(var));
             
             screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
                     currentColormap.get(var), false, false, false, currentMinValues.get(var), currentMaxValues.get(var));
