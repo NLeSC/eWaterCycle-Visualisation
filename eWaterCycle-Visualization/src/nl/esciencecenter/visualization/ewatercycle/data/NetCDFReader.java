@@ -72,16 +72,16 @@ public class NetCDFReader {
     }
 
     public int getAvailableFrames() {
-        return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(0);
+        return shapes.get(shapes.keySet().toArray(new String[] {})[3]).get(0);
     }
 
     public int getLatSize() {
         logger.debug("shape keys:" + Arrays.toString(shapes.keySet().toArray(new String[0])));
-        return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(1);
+        return shapes.get(shapes.keySet().toArray(new String[] {})[3]).get(1);
     }
 
     public int getLonSize() {
-        return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(2);
+        return shapes.get(shapes.keySet().toArray(new String[] {})[3]).get(2);
     }
 
     public ArrayList<String> getVariableNames() {
