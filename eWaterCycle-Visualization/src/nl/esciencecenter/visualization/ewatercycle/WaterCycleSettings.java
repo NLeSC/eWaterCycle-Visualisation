@@ -336,14 +336,14 @@ public class WaterCycleSettings {
             currentDiffMaxValues.put("satDegLow", props.getFloatProperty("SET_DIFF_MAX_satDegLow"));
             currentColormap.put("satDegLow", "moisture");
 
-            minValues.put("recharge", props.getFloatProperty("MIN_precipitation"));
-            maxValues.put("recharge", props.getFloatProperty("MAX_precipitation"));
-            currentMinValues.put("recharge", props.getFloatProperty("SET_MIN_precipitation"));
-            currentMaxValues.put("recharge", props.getFloatProperty("SET_MAX_precipitation"));
-            diffMinValues.put("recharge", props.getFloatProperty("DIFF_MIN_precipitation"));
-            diffMaxValues.put("recharge", props.getFloatProperty("DIFF_MAX_precipitation"));
-            currentDiffMinValues.put("recharge", props.getFloatProperty("SET_DIFF_MIN_precipitation"));
-            currentDiffMaxValues.put("recharge", props.getFloatProperty("SET_DIFF_MAX_precipitation"));
+            minValues.put("recharge", props.getFloatProperty("MIN_recharge"));
+            maxValues.put("recharge", props.getFloatProperty("MAX_recharge"));
+            currentMinValues.put("recharge", props.getFloatProperty("SET_MIN_recharge"));
+            currentMaxValues.put("recharge", props.getFloatProperty("SET_MAX_recharge"));
+            diffMinValues.put("recharge", props.getFloatProperty("DIFF_MIN_recharge"));
+            diffMaxValues.put("recharge", props.getFloatProperty("DIFF_MAX_recharge"));
+            currentDiffMinValues.put("recharge", props.getFloatProperty("SET_DIFF_MIN_recharge"));
+            currentDiffMaxValues.put("recharge", props.getFloatProperty("SET_DIFF_MAX_recharge"));
             currentColormap.put("recharge", "hotres");
 
 
@@ -406,8 +406,12 @@ public class WaterCycleSettings {
             } else if (i == 3) {
                 var = "satDegLow";
             } else {
-                var = null;
+                var = "discharge";
             }
+            
+            currentColormap.get(var);
+            currentMinValues.get(var);
+            currentMaxValues.get(var);
             
             screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
                     currentColormap.get(var), false, false, false, currentMinValues.get(var), currentMaxValues.get(var));
