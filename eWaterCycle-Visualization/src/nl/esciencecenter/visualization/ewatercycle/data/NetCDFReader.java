@@ -75,6 +75,7 @@ public class NetCDFReader {
     }
 
     public int getLatSize() {
+        logger.debug("shape keys:" + shapes.keySet().toArray(new String[0]));
         return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(1);
     }
 
