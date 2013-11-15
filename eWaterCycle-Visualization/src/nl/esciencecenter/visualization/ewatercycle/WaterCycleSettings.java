@@ -316,105 +316,36 @@ public class WaterCycleSettings {
             currentDiffMaxValues.put("discharge", props.getFloatProperty("SET_DIFF_MAX_discharge"));
             currentColormap.put("discharge", "realistic");
 
-            minValues.put("snowCoverSWE", props.getFloatProperty("MIN_snowCoverSWE"));
-            maxValues.put("snowCoverSWE", props.getFloatProperty("MAX_snowCoverSWE"));
-            currentMinValues.put("snowCoverSWE", props.getFloatProperty("SET_MIN_snowCoverSWE"));
-            currentMaxValues.put("snowCoverSWE", props.getFloatProperty("SET_MAX_snowCoverSWE"));
-            diffMinValues.put("snowCoverSWE", props.getFloatProperty("DIFF_MIN_snowCoverSWE"));
-            diffMaxValues.put("snowCoverSWE", props.getFloatProperty("DIFF_MAX_snowCoverSWE"));
-            currentDiffMinValues.put("snowCoverSWE", props.getFloatProperty("SET_DIFF_MIN_snowCoverSWE"));
-            currentDiffMaxValues.put("snowCoverSWE", props.getFloatProperty("SET_DIFF_MAX_snowCoverSWE"));
-            currentColormap.put("snowCoverSWE", "snow");
+            minValues.put("satDegUpp", props.getFloatProperty("MIN_satDegUpp"));
+            maxValues.put("satDegUpp", props.getFloatProperty("MAX_satDegUpp"));
+            currentMinValues.put("satDegUpp", props.getFloatProperty("SET_MIN_satDegUpp"));
+            currentMaxValues.put("satDegUpp", props.getFloatProperty("SET_MAX_satDegUpp"));
+            diffMinValues.put("satDegUpp", props.getFloatProperty("DIFF_MIN_satDegUpp"));
+            diffMaxValues.put("satDegUpp", props.getFloatProperty("DIFF_MAX_satDegUpp"));
+            currentDiffMinValues.put("satDegUpp", props.getFloatProperty("SET_DIFF_MIN_satDegUpp"));
+            currentDiffMaxValues.put("satDegUpp", props.getFloatProperty("SET_DIFF_MAX_satDegUpp"));
+            currentColormap.put("satDegUpp", "moisture");
+            
+            minValues.put("satDegLow", props.getFloatProperty("MIN_satDegLow"));
+            maxValues.put("satDegLow", props.getFloatProperty("MAX_satDegLow"));
+            currentMinValues.put("satDegLow", props.getFloatProperty("SET_MIN_satDegLow"));
+            currentMaxValues.put("satDegLow", props.getFloatProperty("SET_MAX_satDegLow"));
+            diffMinValues.put("satDegLow", props.getFloatProperty("DIFF_MIN_satDegLow"));
+            diffMaxValues.put("satDegLow", props.getFloatProperty("DIFF_MAX_satDegLow"));
+            currentDiffMinValues.put("satDegLow", props.getFloatProperty("SET_DIFF_MIN_satDegLow"));
+            currentDiffMaxValues.put("satDegLow", props.getFloatProperty("SET_DIFF_MAX_satDegLow"));
+            currentColormap.put("satDegLow", "moisture");
 
-            minValues.put("storUpp000005", props.getFloatProperty("MIN_storUpp000005"));
-            maxValues.put("storUpp000005", props.getFloatProperty("MAX_storUpp000005"));
-            currentMinValues.put("storUpp000005", props.getFloatProperty("SET_MIN_storUpp000005"));
-            currentMaxValues.put("storUpp000005", props.getFloatProperty("SET_MAX_storUpp000005"));
-            diffMinValues.put("storUpp000005", props.getFloatProperty("DIFF_MIN_storUpp000005"));
-            diffMaxValues.put("storUpp000005", props.getFloatProperty("DIFF_MAX_storUpp000005"));
-            currentDiffMinValues.put("storUpp000005", props.getFloatProperty("SET_DIFF_MIN_storUpp000005"));
-            currentDiffMaxValues.put("storUpp000005", props.getFloatProperty("SET_DIFF_MAX_storUpp000005"));
-            currentColormap.put("storUpp000005", "moisture");
+            minValues.put("recharge", props.getFloatProperty("MIN_precipitation"));
+            maxValues.put("recharge", props.getFloatProperty("MAX_precipitation"));
+            currentMinValues.put("recharge", props.getFloatProperty("SET_MIN_precipitation"));
+            currentMaxValues.put("recharge", props.getFloatProperty("SET_MAX_precipitation"));
+            diffMinValues.put("recharge", props.getFloatProperty("DIFF_MIN_precipitation"));
+            diffMaxValues.put("recharge", props.getFloatProperty("DIFF_MAX_precipitation"));
+            currentDiffMinValues.put("recharge", props.getFloatProperty("SET_DIFF_MIN_precipitation"));
+            currentDiffMaxValues.put("recharge", props.getFloatProperty("SET_DIFF_MAX_precipitation"));
+            currentColormap.put("recharge", "hotres");
 
-            minValues.put("storUpp005030", props.getFloatProperty("MIN_storUpp005030"));
-            maxValues.put("storUpp005030", props.getFloatProperty("MAX_storUpp005030"));
-            currentMinValues.put("storUpp005030", props.getFloatProperty("SET_MIN_storUpp005030"));
-            currentMaxValues.put("storUpp005030", props.getFloatProperty("SET_MAX_storUpp005030"));
-            diffMinValues.put("storUpp005030", props.getFloatProperty("DIFF_MIN_storUpp005030"));
-            diffMaxValues.put("storUpp005030", props.getFloatProperty("DIFF_MAX_storUpp005030"));
-            currentDiffMinValues.put("storUpp005030", props.getFloatProperty("SET_DIFF_MIN_storUpp005030"));
-            currentDiffMaxValues.put("storUpp005030", props.getFloatProperty("SET_DIFF_MAX_storUpp005030"));
-            currentColormap.put("storUpp005030", "moisture");
-
-            minValues.put("storLow030150", props.getFloatProperty("MIN_storLow030150"));
-            maxValues.put("storLow030150", props.getFloatProperty("MAX_storLow030150"));
-            currentMinValues.put("storLow030150", props.getFloatProperty("SET_MIN_storLow030150"));
-            currentMaxValues.put("storLow030150", props.getFloatProperty("SET_MAX_storLow030150"));
-            diffMinValues.put("storLow030150", props.getFloatProperty("DIFF_MIN_storLow030150"));
-            diffMaxValues.put("storLow030150", props.getFloatProperty("DIFF_MAX_storLow030150"));
-            currentDiffMinValues.put("storLow030150", props.getFloatProperty("SET_DIFF_MIN_storLow030150"));
-            currentDiffMaxValues.put("storLow030150", props.getFloatProperty("SET_DIFF_MAX_storLow030150"));
-            currentColormap.put("storLow030150", "moisture");
-
-            minValues.put("satDegUpp000005", props.getFloatProperty("MIN_satDegUpp000005"));
-            maxValues.put("satDegUpp000005", props.getFloatProperty("MAX_satDegUpp000005"));
-            currentMinValues.put("satDegUpp000005", props.getFloatProperty("SET_MIN_satDegUpp000005"));
-            currentMaxValues.put("satDegUpp000005", props.getFloatProperty("SET_MAX_satDegUpp000005"));
-            diffMinValues.put("satDegUpp000005", props.getFloatProperty("DIFF_MIN_satDegUpp000005"));
-            diffMaxValues.put("satDegUpp000005", props.getFloatProperty("DIFF_MAX_satDegUpp000005"));
-            currentDiffMinValues.put("satDegUpp000005", props.getFloatProperty("SET_DIFF_MIN_satDegUpp000005"));
-            currentDiffMaxValues.put("satDegUpp000005", props.getFloatProperty("SET_DIFF_MAX_satDegUpp000005"));
-            currentColormap.put("satDegUpp000005", "moisture");
-
-            minValues.put("satDegUpp005030", props.getFloatProperty("MIN_satDegUpp005030"));
-            maxValues.put("satDegUpp005030", props.getFloatProperty("MAX_satDegUpp005030"));
-            currentMinValues.put("satDegUpp005030", props.getFloatProperty("SET_MIN_satDegUpp005030"));
-            currentMaxValues.put("satDegUpp005030", props.getFloatProperty("SET_MAX_satDegUpp005030"));
-            diffMinValues.put("satDegUpp005030", props.getFloatProperty("DIFF_MIN_satDegUpp005030"));
-            diffMaxValues.put("satDegUpp005030", props.getFloatProperty("DIFF_MAX_satDegUpp005030"));
-            currentDiffMinValues.put("satDegUpp005030", props.getFloatProperty("SET_DIFF_MIN_satDegUpp005030"));
-            currentDiffMaxValues.put("satDegUpp005030", props.getFloatProperty("SET_DIFF_MAX_satDegUpp005030"));
-            currentColormap.put("satDegUpp005030", "moisture");
-
-            minValues.put("satDegLow030150", props.getFloatProperty("MIN_satDegLow030150"));
-            maxValues.put("satDegLow030150", props.getFloatProperty("MAX_satDegLow030150"));
-            currentMinValues.put("satDegLow030150", props.getFloatProperty("SET_MIN_satDegLow030150"));
-            currentMaxValues.put("satDegLow030150", props.getFloatProperty("SET_MAX_satDegLow030150"));
-            diffMinValues.put("satDegLow030150", props.getFloatProperty("DIFF_MIN_satDegLow030150"));
-            diffMaxValues.put("satDegLow030150", props.getFloatProperty("DIFF_MAX_satDegLow030150"));
-            currentDiffMinValues.put("satDegLow030150", props.getFloatProperty("SET_DIFF_MIN_satDegLow030150"));
-            currentDiffMaxValues.put("satDegLow030150", props.getFloatProperty("SET_DIFF_MAX_satDegLow030150"));
-            currentColormap.put("satDegLow030150", "moisture");
-
-            minValues.put("precipitation", props.getFloatProperty("MIN_precipitation"));
-            maxValues.put("precipitation", props.getFloatProperty("MAX_precipitation"));
-            currentMinValues.put("precipitation", props.getFloatProperty("SET_MIN_precipitation"));
-            currentMaxValues.put("precipitation", props.getFloatProperty("SET_MAX_precipitation"));
-            diffMinValues.put("precipitation", props.getFloatProperty("DIFF_MIN_precipitation"));
-            diffMaxValues.put("precipitation", props.getFloatProperty("DIFF_MAX_precipitation"));
-            currentDiffMinValues.put("precipitation", props.getFloatProperty("SET_DIFF_MIN_precipitation"));
-            currentDiffMaxValues.put("precipitation", props.getFloatProperty("SET_DIFF_MAX_precipitation"));
-            currentColormap.put("precipitation", "hotres");
-
-            minValues.put("temperature", props.getFloatProperty("MIN_temperature"));
-            maxValues.put("temperature", props.getFloatProperty("MAX_temperature"));
-            currentMinValues.put("temperature", props.getFloatProperty("SET_MIN_temperature"));
-            currentMaxValues.put("temperature", props.getFloatProperty("SET_MAX_temperature"));
-            diffMinValues.put("temperature", props.getFloatProperty("DIFF_MIN_temperature"));
-            diffMaxValues.put("temperature", props.getFloatProperty("DIFF_MAX_temperature"));
-            currentDiffMinValues.put("temperature", props.getFloatProperty("SET_DIFF_MIN_temperature"));
-            currentDiffMaxValues.put("temperature", props.getFloatProperty("SET_DIFF_MAX_temperature"));
-            currentColormap.put("temperature", "realistic");
-
-            minValues.put("runoff", props.getFloatProperty("MIN_runoff"));
-            maxValues.put("runoff", props.getFloatProperty("MAX_runoff"));
-            currentMinValues.put("runoff", props.getFloatProperty("SET_MIN_runoff"));
-            currentMaxValues.put("runoff", props.getFloatProperty("SET_MAX_runoff"));
-            diffMinValues.put("runoff", props.getFloatProperty("DIFF_MIN_runoff"));
-            diffMaxValues.put("runoff", props.getFloatProperty("DIFF_MAX_runoff"));
-            currentDiffMinValues.put("runoff", props.getFloatProperty("SET_DIFF_MIN_runoff"));
-            currentDiffMaxValues.put("runoff", props.getFloatProperty("SET_DIFF_MAX_runoff"));
-            currentColormap.put("runoff", "hotres");
 
             // grid_width_dimension_substring = props
             // .getProperty("grid_width_dimension_substring");
