@@ -130,6 +130,7 @@ public class TextureStorage {
         legendStorage = newLegendStore;
 
         if (!surfaceStorage.containsValue(newDesc) && !legendStorage.containsValue(newDesc)) {
+            logger.debug("requesting: " + newDesc.getVarName());
             manager.buildImages(newDesc);
         }
     }

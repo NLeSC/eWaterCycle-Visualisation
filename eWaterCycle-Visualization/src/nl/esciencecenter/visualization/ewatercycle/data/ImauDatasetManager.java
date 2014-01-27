@@ -4,10 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-import nl.esciencecenter.esight.swing.ColormapInterpreter;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Color;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Dimensions;
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.ewatercycle.WaterCycleSettings;
 
 import org.slf4j.Logger;
@@ -17,84 +19,172 @@ public class ImauDatasetManager {
     private final static Logger logger = LoggerFactory.getLogger(ImauDatasetManager.class);
     private final WaterCycleSettings settings = WaterCycleSettings.getInstance();
 
-    private final ArrayList<Integer> availableFrameSequenceNumbers;
-    private final ArrayList<String> availableVariables;
+    private ArrayList<Integer> availableFrameSequenceNumbers;
+    private HashMap<String, NetCDFReader> readers;
 
-    private final NetCDFReader ncr1;
-    private NetCDFReader ncrSnowCoverSWE, ncrStorUpp000005, ncrStorUpp005030, ncrStorLow030150;
-    private NetCDFReader ncrSatDegUpp000005, ncrSatDegUpp005030, ncrSatDegLow030150, ncrPrecipitation, ncrTemperature;
+    // private NetCDFReader ncr1;
+    // private NetCDFReader ncrSnowCoverSWE, ncrStorUpp000005, ncrStorUpp005030,
+    // ncrStorLow030150;
+    // private NetCDFReader ncrSatDegUpp000005, ncrSatDegUpp005030,
+    // ncrSatDegLow030150, ncrPrecipitation, ncrTemperature;
 
-    private final TextureStorage texStorage;
+    private TextureStorage texStorage;
 
-    private final int latArraySize;
-    private final int lonArraySize;
+    private int latArraySize;
+    private int lonArraySize;
 
     public ImauDatasetManager(File file1) {
-        logger.debug("Opening dataset with initial file: " + file1.getAbsolutePath());
-
-        ncr1 = new NetCDFReader(file1);
-        logger.debug(ncr1.toString());
-
-        availableFrameSequenceNumbers = new ArrayList<Integer>();
-        for (int i = 0; i < ncr1.getAvailableFrames(); i++) {
-            availableFrameSequenceNumbers.add(i);
-        }
-        availableVariables = ncr1.getVariableNames();
-
-        latArraySize = ncr1.getLatSize();
-        lonArraySize = ncr1.getLonSize();
-
-        texStorage = new TextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
-                lonArraySize, latArraySize);
+        // logger.debug("Opening dataset with initial file: " +
+        // file1.getAbsolutePath());
+        //
+        // ncr1 = new NetCDFReader(file1);
+        // logger.debug(ncr1.toString());
+        //
+        // availableFrameSequenceNumbers = new ArrayList<Integer>();
+        // for (int i = 0; i < ncr1.getAvailableFrames(); i++) {
+        // availableFrameSequenceNumbers.add(i);
+        // }
+        // availableVariables = ncr1.getVariableNames();
+        //
+        // latArraySize = ncr1.getLatSize();
+        // lonArraySize = ncr1.getLonSize();
+        //
+        // texStorage = new TextureStorage(this, settings.getNumScreensRows() *
+        // settings.getNumScreensCols(),
+        // lonArraySize, latArraySize);
 
     }
 
     public ImauDatasetManager(File discharge, File snowCoverSWE, File storUpp000005, File storUpp005030,
             File storLow030150, File satDegUpp000005, File satDegUpp005030, File satDegLow030150, File precipitation,
             File temperature) {
-        ncr1 = new NetCDFReader(discharge);
-        ncrSnowCoverSWE = new NetCDFReader(snowCoverSWE);
-        ncrStorUpp000005 = new NetCDFReader(storUpp000005);
-        ncrStorUpp005030 = new NetCDFReader(storUpp005030);
-        ncrStorLow030150 = new NetCDFReader(storLow030150);
-        ncrSatDegUpp000005 = new NetCDFReader(satDegUpp000005);
-        ncrSatDegUpp005030 = new NetCDFReader(satDegUpp005030);
-        ncrSatDegLow030150 = new NetCDFReader(satDegLow030150);
-        ncrPrecipitation = new NetCDFReader(precipitation);
-        ncrTemperature = new NetCDFReader(temperature);
+        File[] files = new File[] { discharge, snowCoverSWE, storUpp000005, storUpp005030, storLow030150,
+                satDegUpp000005, satDegUpp005030, satDegLow030150, precipitation, temperature };
 
+        init(files);
+
+        // ncr1 = new NetCDFReader(discharge);
+        // ncrSnowCoverSWE = new NetCDFReader(snowCoverSWE);
+        // ncrStorUpp000005 = new NetCDFReader(storUpp000005);
+        // ncrStorUpp005030 = new NetCDFReader(storUpp005030);
+        // ncrStorLow030150 = new NetCDFReader(storLow030150);
+        // ncrSatDegUpp000005 = new NetCDFReader(satDegUpp000005);
+        // ncrSatDegUpp005030 = new NetCDFReader(satDegUpp005030);
+        // ncrSatDegLow030150 = new NetCDFReader(satDegLow030150);
+        // ncrPrecipitation = new NetCDFReader(precipitation);
+        // ncrTemperature = new NetCDFReader(temperature);
+        //
+        // availableFrameSequenceNumbers = new ArrayList<Integer>();
+        //
+        // for (int i = 0; i < ncr1.getAvailableFrames(); i++) {
+        // if (i < ncrSnowCoverSWE.getAvailableFrames() && i <
+        // ncrStorUpp000005.getAvailableFrames()
+        // && i < ncrStorUpp005030.getAvailableFrames() && i <
+        // ncrStorLow030150.getAvailableFrames()) {
+        // availableFrameSequenceNumbers.add(i);
+        // }
+        // }
+        // availableVariables = new ArrayList<String>();
+        // availableVariables.add("discharge");
+        // availableVariables.add("snowCoverSWE");
+        // availableVariables.add("storUpp000005");
+        // availableVariables.add("storUpp005030");
+        // availableVariables.add("storLow030150");
+        // availableVariables.add("satDegUpp000005");
+        // availableVariables.add("satDegUpp005030");
+        // availableVariables.add("satDegLow030150");
+        // availableVariables.add("precipitation");
+        // availableVariables.add("temperature");
+        //
+        // latArraySize = ncr1.getLatSize();
+        //
+        // if (latArraySize != ncrSnowCoverSWE.getLatSize() || latArraySize !=
+        // ncrStorUpp000005.getLatSize()
+        // || latArraySize != ncrStorUpp005030.getLatSize() || latArraySize !=
+        // ncrStorLow030150.getLatSize()) {
+        // logger.debug("LAT ARRAY SIZES NOT EQUAL");
+        // }
+        //
+        // lonArraySize = ncr1.getLonSize();
+        //
+        // if (lonArraySize != ncrSnowCoverSWE.getLonSize() || lonArraySize !=
+        // ncrStorUpp000005.getLonSize()
+        // || lonArraySize != ncrStorUpp005030.getLonSize() || lonArraySize !=
+        // ncrStorLow030150.getLonSize()) {
+        // logger.debug("LON ARRAY SIZES NOT EQUAL");
+        // }
+        //
+        // texStorage = new TextureStorage(this, settings.getNumScreensRows() *
+        // settings.getNumScreensCols(),
+        // lonArraySize, latArraySize);
+
+    }
+
+    public ImauDatasetManager(File[] files) {
+        init(files);
+    }
+
+    private void init(File[] files) {
         availableFrameSequenceNumbers = new ArrayList<Integer>();
+        readers = new HashMap<String, NetCDFReader>();
 
-        for (int i = 0; i < ncr1.getAvailableFrames(); i++) {
-            if (i < ncrSnowCoverSWE.getAvailableFrames() && i < ncrStorUpp000005.getAvailableFrames()
-                    && i < ncrStorUpp005030.getAvailableFrames() && i < ncrStorLow030150.getAvailableFrames()) {
-                availableFrameSequenceNumbers.add(i);
+        latArraySize = 0;
+        lonArraySize = 0;
+        int frames = 0;
+
+        for (File file : files) {
+            boolean accept = true;
+            boolean init = false;
+
+            NetCDFReader ncr = new NetCDFReader(file);
+
+            // If this is the first file, use it to set the standard
+            if (latArraySize == 0) {
+                latArraySize = ncr.getLatSize();
             }
-        }
-        availableVariables = new ArrayList<String>();
-        availableVariables.add("discharge");
-        availableVariables.add("snowCoverSWE");
-        availableVariables.add("storUpp000005");
-        availableVariables.add("storUpp005030");
-        availableVariables.add("storLow030150");
-        availableVariables.add("satDegUpp000005");
-        availableVariables.add("satDegUpp005030");
-        availableVariables.add("satDegLow030150");
-        availableVariables.add("precipitation");
-        availableVariables.add("temperature");
 
-        latArraySize = ncr1.getLatSize();
+            if (lonArraySize == 0) {
+                lonArraySize = ncr.getLonSize();
+            }
 
-        if (latArraySize != ncrSnowCoverSWE.getLatSize() || latArraySize != ncrStorUpp000005.getLatSize()
-                || latArraySize != ncrStorUpp005030.getLatSize() || latArraySize != ncrStorLow030150.getLatSize()) {
-            logger.debug("LAT ARRAY SIZES NOT EQUAL");
-        }
+            if (frames == 0) {
+                frames = ncr.getAvailableFrames();
+                init = true;
+            }
 
-        lonArraySize = ncr1.getLonSize();
+            // If it is a subsequent file, check if it adheres to the standards
+            // set by the first file.
+            if (latArraySize != ncr.getLatSize()) {
+                logger.debug("LAT ARRAY SIZES NOT EQUAL");
+                accept = false;
+            }
 
-        if (lonArraySize != ncrSnowCoverSWE.getLonSize() || lonArraySize != ncrStorUpp000005.getLonSize()
-                || lonArraySize != ncrStorUpp005030.getLonSize() || lonArraySize != ncrStorLow030150.getLonSize()) {
-            logger.debug("LON ARRAY SIZES NOT EQUAL");
+            if (lonArraySize != ncr.getLonSize()) {
+                logger.debug("LON ARRAY SIZES NOT EQUAL");
+                accept = false;
+            }
+
+            if (frames != ncr.getAvailableFrames()) {
+                logger.debug("NUMBER OF FRAMES NOT EQUAL");
+                accept = false;
+            }
+
+            // If it does adhere to the standard, add the variables to the
+            // datastore and associate them with the netcdf readers they came
+            // from.
+            if (accept) {
+                ArrayList<String> varNames = ncr.getVariableNames();
+                for (String varName : varNames) {
+                    readers.put(varName, ncr);
+                    System.out.println(varName + " added to available variables.");
+                }
+                if (init) {
+                    int numFrames = ncr.getAvailableFrames();
+                    for (int i = 0; i < numFrames; i++) {
+                        availableFrameSequenceNumbers.add(i);
+                    }
+                }
+            }
         }
 
         texStorage = new TextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
@@ -106,28 +196,28 @@ public class ImauDatasetManager {
         int frameNumber = desc.getFrameNumber();
         String varName = desc.getVarName();
 
-        NetCDFReader currentReader = ncr1;
-        if (varName.compareTo("discharge") == 0) {
-            currentReader = ncr1;
-        } else if (varName.compareTo("snowCoverSWE") == 0) {
-            currentReader = ncrSnowCoverSWE;
-        } else if (varName.compareTo("storUpp000005") == 0) {
-            currentReader = ncrStorUpp000005;
-        } else if (varName.compareTo("storUpp005030") == 0) {
-            currentReader = ncrStorUpp005030;
-        } else if (varName.compareTo("storLow030150") == 0) {
-            currentReader = ncrStorLow030150;
-        } else if (varName.compareTo("satDegUpp000005") == 0) {
-            currentReader = ncrSatDegUpp000005;
-        } else if (varName.compareTo("satDegUpp005030") == 0) {
-            currentReader = ncrSatDegUpp005030;
-        } else if (varName.compareTo("satDegLow030150") == 0) {
-            currentReader = ncrSatDegLow030150;
-        } else if (varName.compareTo("precipitation") == 0) {
-            currentReader = ncrPrecipitation;
-        } else if (varName.compareTo("temperature") == 0) {
-            currentReader = ncrTemperature;
-        }
+        NetCDFReader currentReader = readers.get(varName);
+        // if (varName.compareTo("discharge") == 0) {
+        // currentReader = ncr1;
+        // } else if (varName.compareTo("snowCoverSWE") == 0) {
+        // currentReader = ncrSnowCoverSWE;
+        // } else if (varName.compareTo("storUpp000005") == 0) {
+        // currentReader = ncrStorUpp000005;
+        // } else if (varName.compareTo("storUpp005030") == 0) {
+        // currentReader = ncrStorUpp005030;
+        // } else if (varName.compareTo("storLow030150") == 0) {
+        // currentReader = ncrStorLow030150;
+        // } else if (varName.compareTo("satDegUpp000005") == 0) {
+        // currentReader = ncrSatDegUpp000005;
+        // } else if (varName.compareTo("satDegUpp005030") == 0) {
+        // currentReader = ncrSatDegUpp005030;
+        // } else if (varName.compareTo("satDegLow030150") == 0) {
+        // currentReader = ncrSatDegLow030150;
+        // } else if (varName.compareTo("precipitation") == 0) {
+        // currentReader = ncrPrecipitation;
+        // } else if (varName.compareTo("temperature") == 0) {
+        // currentReader = ncrTemperature;
+        // }
 
         if (frameNumber < 0 || frameNumber > currentReader.getAvailableFrames(varName)) {
             logger.debug("buildImages : Requested frameNumber  " + frameNumber + " out of range.");
@@ -193,17 +283,20 @@ public class ImauDatasetManager {
         }
     }
 
-    public int getNumFiles() {
+    public int getNumFrames() {
         return availableFrameSequenceNumbers.size();
     }
 
     public ArrayList<String> getVariables() {
-        return availableVariables;
+        ArrayList<String> result = new ArrayList<String>();
+        for (Map.Entry<String, NetCDFReader> readerEntry : readers.entrySet()) {
+            result.add(readerEntry.getKey());
+        }
+        return result;
     }
 
     public String getVariableUnits(String varName) {
-
-        return ncr1.getUnits(varName);
+        return readers.get(varName).getUnits(varName);
     }
 
     public int getImageWidth() {

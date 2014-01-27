@@ -25,7 +25,9 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -33,12 +35,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
-import nl.esciencecenter.esight.ESightInterfacePanel;
-import nl.esciencecenter.esight.swing.ColormapInterpreter;
-import nl.esciencecenter.esight.swing.CustomJSlider;
-import nl.esciencecenter.esight.swing.GoggleSwing;
-import nl.esciencecenter.esight.swing.RangeSlider;
-import nl.esciencecenter.esight.swing.RangeSliderUI;
+import nl.esciencecenter.neon.NeonInterfacePanel;
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
+import nl.esciencecenter.neon.swing.CustomJSlider;
+import nl.esciencecenter.neon.swing.GoggleSwing;
+import nl.esciencecenter.neon.swing.RangeSlider;
+import nl.esciencecenter.neon.swing.RangeSliderUI;
 import nl.esciencecenter.visualization.ewatercycle.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.ewatercycle.data.NetCDFUtil;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
@@ -46,7 +48,7 @@ import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescriptio
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WaterCyclePanel extends ESightInterfacePanel {
+public class WaterCyclePanel extends NeonInterfacePanel {
     public static enum TweakState {
         NONE, DATA, VISUAL, MOVIE
     }
@@ -92,6 +94,23 @@ public class WaterCyclePanel extends ESightInterfacePanel {
 
         timer = new ImauTimedPlayer(timeBar, frameCounter);
 
+        // Make the menu bar
+        final JMenuBar menuBar = new JMenuBar();
+        menuBar.setLayout(new BoxLayout(menuBar, BoxLayout.X_AXIS));
+
+        final JMenu file = new JMenu("File");
+        final JMenuItem open = new JMenuItem("Open");
+        open.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                final File[] files = openFile();
+                handleFiles(files);
+            }
+        });
+        file.add(open);
+        menuBar.add(file);
+        menuBar.add(Box.createHorizontalGlue());
+
         final JMenuBar menuBar1 = new JMenuBar();
 
         ImageIcon eWaterCycleIcon = GoggleSwing.createResizedImageIcon("images/eWaterCycle.png", "eWaterCycle Logo",
@@ -109,10 +128,10 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         nlesclogo.setMinimumSize(new Dimension(30, 20));
         nlesclogo.setMaximumSize(new Dimension(31, 28));
 
-        ImageIcon saraIcon = GoggleSwing.createResizedImageIcon("images/TUDelft.png", "TUDelft Logo", 75, 28);
-        JLabel saralogo = new JLabel(saraIcon);
-        saralogo.setMinimumSize(new Dimension(40, 20));
-        saralogo.setMaximumSize(new Dimension(41, 28));
+        ImageIcon delftIcon = GoggleSwing.createResizedImageIcon("images/TUDelft.png", "TUDelft Logo", 75, 28);
+        JLabel delftlogo = new JLabel(delftIcon);
+        delftlogo.setMinimumSize(new Dimension(40, 20));
+        delftlogo.setMaximumSize(new Dimension(41, 28));
         menuBar2.add(Box.createHorizontalStrut(3));
 
         ImageIcon imauIcon = GoggleSwing.createResizedImageIcon("images/UU.png", "UU Logo", 75, 28);
@@ -123,7 +142,7 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         menuBar2.add(Box.createHorizontalGlue());
         menuBar2.add(imaulogo);
         menuBar2.add(Box.createHorizontalStrut(5));
-        menuBar2.add(saralogo);
+        menuBar2.add(delftlogo);
         menuBar2.add(Box.createHorizontalStrut(5));
         menuBar2.add(nlesclogo);
         menuBar2.add(Box.createHorizontalGlue());
@@ -131,7 +150,7 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         Container menuContainer = new Container();
         menuContainer.setLayout(new BoxLayout(menuContainer, BoxLayout.Y_AXIS));
 
-        // menuContainer.add(menuBar);
+        menuContainer.add(menuBar);
         menuContainer.add(menuBar1);
         menuContainer.add(menuBar2);
 
@@ -384,6 +403,9 @@ public class WaterCyclePanel extends ESightInterfacePanel {
                         timer.movieMode();
                     }
                 })));
+
+        validate();
+        repaint();
     }
 
     private void createDataTweakPanel() {
@@ -517,6 +539,8 @@ public class WaterCyclePanel extends ESightInterfacePanel {
             dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
         }
         dataConfig.add(Box.createVerticalGlue());
+        validate();
+        repaint();
     }
 
     protected void handleFile(File file1, File file2) {
@@ -587,7 +611,7 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         settings.setScreenshotPath(path);
     }
 
-    protected void handleFile(File file) {
+    private void handleFile(File file) {
         if (file != null && NetCDFUtil.isAcceptableFile(file, new String[] { ".nc" })) {
             if (timer.isInitialized()) {
                 timer.close();
@@ -619,17 +643,60 @@ public class WaterCyclePanel extends ESightInterfacePanel {
         }
     }
 
-    private File openFile() {
+    private void handleFiles(File[] files) {
+        boolean accept = true;
+        for (File thisFile : files) {
+            if (!NetCDFUtil.isAcceptableFile(thisFile, new String[] { ".nc" })) {
+                accept = false;
+            }
+        }
+
+        if (accept) {
+            if (timer.isInitialized()) {
+                timer.close();
+            }
+
+            timer = new ImauTimedPlayer(timeBar, frameCounter);
+
+            timer.init(files);
+            new Thread(timer).start();
+
+            variables = new ArrayList<String>();
+            for (String v : timer.getVariables()) {
+                variables.add(v);
+            }
+            createDataTweakPanel();
+
+            final String path = NetCDFUtil.getPath(files[0]) + "screenshots/";
+
+            settings.setScreenshotPath(path);
+
+        } else {
+            if (null != files) {
+                final JOptionPane pane = new JOptionPane();
+                pane.setMessage("Tried to open invalid file type.");
+                final JDialog dialog = pane.createDialog("Alert");
+                dialog.setVisible(true);
+            } else {
+                logger.error("File is null");
+                System.exit(1);
+            }
+        }
+
+    }
+
+    private File[] openFile() {
         final JFileChooser fileChooser = new JFileChooser();
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(true);
         final int result = fileChooser.showOpenDialog(this);
 
         // user clicked Cancel button on dialog
         if (result == JFileChooser.CANCEL_OPTION) {
             return null;
         } else {
-            return fileChooser.getSelectedFile();
+            return fileChooser.getSelectedFiles();
         }
     }
 
@@ -637,6 +704,8 @@ public class WaterCyclePanel extends ESightInterfacePanel {
     public void setTweakState(TweakState newState) {
         configPanel.setVisible(false);
         configPanel.remove(dataConfig);
+        validate();
+        repaint();
         // configPanel.remove(visualConfig);
         // configPanel.remove(movieConfig);
 

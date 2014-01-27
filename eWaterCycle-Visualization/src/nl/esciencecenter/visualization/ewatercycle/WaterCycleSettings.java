@@ -2,7 +2,7 @@ package nl.esciencecenter.visualization.ewatercycle;
 
 import java.util.HashMap;
 
-import nl.esciencecenter.esight.util.TypedProperties;
+import nl.esciencecenter.neon.util.TypedProperties;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
 
 import org.slf4j.Logger;

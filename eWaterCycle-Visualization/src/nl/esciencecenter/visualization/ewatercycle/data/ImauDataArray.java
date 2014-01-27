@@ -3,7 +3,7 @@ package nl.esciencecenter.visualization.ewatercycle.data;
 import java.io.IOException;
 import java.util.List;
 
-import nl.esciencecenter.esight.exceptions.UninitializedException;
+import nl.esciencecenter.neon.exceptions.UninitializedException;
 import ucar.ma2.Array;
 import ucar.ma2.InvalidRangeException;
 import ucar.nc2.Dimension;

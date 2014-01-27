@@ -12,26 +12,26 @@ import javax.media.opengl.GLContext;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLException;
 
-import nl.esciencecenter.esight.datastructures.FBO;
-import nl.esciencecenter.esight.datastructures.IntPBO;
-import nl.esciencecenter.esight.exceptions.UninitializedException;
-import nl.esciencecenter.esight.math.Color4;
-import nl.esciencecenter.esight.math.MatF4;
-import nl.esciencecenter.esight.math.MatrixFMath;
-import nl.esciencecenter.esight.math.Point4;
-import nl.esciencecenter.esight.math.VecF2;
-import nl.esciencecenter.esight.math.VecF3;
-import nl.esciencecenter.esight.math.VecF4;
-import nl.esciencecenter.esight.models.GeoSphere;
-import nl.esciencecenter.esight.models.Model;
-import nl.esciencecenter.esight.models.Quad;
-import nl.esciencecenter.esight.shaders.ShaderProgram;
-import nl.esciencecenter.esight.shaders.ShaderProgramLoader;
-import nl.esciencecenter.esight.text.MultiColorText;
-import nl.esciencecenter.esight.text.jogampexperimental.Font;
-import nl.esciencecenter.esight.text.jogampexperimental.FontFactory;
-import nl.esciencecenter.esight.textures.ByteBufferTexture;
-import nl.esciencecenter.esight.textures.Texture2D;
+import nl.esciencecenter.neon.datastructures.FrameBufferObject;
+import nl.esciencecenter.neon.datastructures.IntPixelBufferObject;
+import nl.esciencecenter.neon.exceptions.UninitializedException;
+import nl.esciencecenter.neon.math.Color4;
+import nl.esciencecenter.neon.math.Float2Vector;
+import nl.esciencecenter.neon.math.Float3Vector;
+import nl.esciencecenter.neon.math.Float4Matrix;
+import nl.esciencecenter.neon.math.Float4Vector;
+import nl.esciencecenter.neon.math.FloatMatrixMath;
+import nl.esciencecenter.neon.math.Point4;
+import nl.esciencecenter.neon.models.GeoSphere;
+import nl.esciencecenter.neon.models.Model;
+import nl.esciencecenter.neon.models.Quad;
+import nl.esciencecenter.neon.shaders.ShaderProgram;
+import nl.esciencecenter.neon.shaders.ShaderProgramLoader;
+import nl.esciencecenter.neon.text.MultiColorText;
+import nl.esciencecenter.neon.text.jogampexperimental.Font;
+import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
+import nl.esciencecenter.neon.textures.ByteBufferTexture;
+import nl.esciencecenter.neon.textures.Texture2D;
 import nl.esciencecenter.visualization.ewatercycle.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
 
@@ -52,9 +52,10 @@ public class WaterCycleWindow implements GLEventListener {
 
     private Model sphereModel, legendModel, atmModel;
 
-    private FBO atmosphereFBO, hudTextFBO, legendTextureFBO, sphereTextureFBO;
+    private FrameBufferObject atmosphereFrameBufferObject, hudTextFrameBufferObject, legendTextureFrameBufferObject,
+            sphereTextureFrameBufferObject;
 
-    private IntPBO finalPBO;
+    private IntPixelBufferObject finalPBO;
 
     private final BufferedImage currentImage = null;
 
@@ -63,7 +64,7 @@ public class WaterCycleWindow implements GLEventListener {
     private boolean reshaped = false;
 
     private SurfaceTextureDescription[] cachedTextureDescriptions;
-    private FBO[] cachedFBOs;
+    private FrameBufferObject[] cachedFrameBufferObjects;
     private final MultiColorText[] varNames;
     private final MultiColorText[] legendTextsMin;
     private final MultiColorText[] legendTextsMax;
@@ -73,7 +74,7 @@ public class WaterCycleWindow implements GLEventListener {
     // private MultiColorText testText, varNameText, datasetText, dateText,
     // legendTextMin, legendTextMax;
 
-    private int cachedScreens = 4;
+    private int cachedScreens = 9;
 
     private ImauTimedPlayer timer;
     private float aspect;
@@ -99,7 +100,7 @@ public class WaterCycleWindow implements GLEventListener {
     final Point4 eye = new Point4((float) (radius * Math.sin(ftheta) * Math.cos(phi)), (float) (radius
             * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)));
     final Point4 at = new Point4(0.0f, 0.0f, 0.0f);
-    final VecF4 up = new VecF4(0.0f, 1.0f, 0.0f, 0.0f);
+    final Float4Vector up = new Float4Vector(0.0f, 1.0f, 0.0f, 0.0f);
 
     public WaterCycleWindow(WaterCycleInputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
@@ -143,7 +144,7 @@ public class WaterCycleWindow implements GLEventListener {
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
-        // ESightNewtWindow by adding the line
+        // neonNewtWindow by adding the line
         // glp = GLProfile.get(GLProfile.GL3);
         // Therefore, we extract a GL3 instance, so we cannot make any
         // unfortunate mistakes (calls to methods that are undefined for this
@@ -225,7 +226,7 @@ public class WaterCycleWindow implements GLEventListener {
             System.exit(1);
         }
 
-        fsq = new Quad(2, 2, new VecF3(0, 0, 0.1f));
+        fsq = new Quad(2, 2, new Float3Vector(0, 0, 0.1f));
         fsq.init(gl);
 
         // sphereModel = new GeoSphereCut(Material.random(), 120, 120, 50f,
@@ -236,7 +237,7 @@ public class WaterCycleWindow implements GLEventListener {
         // cutModel = new GeoSphereCutEdge(Material.random(), 120, 50f);
         // cutModel.init(gl);
 
-        legendModel = new Quad(1.5f, .1f, new VecF3(1, 0, 0.1f));
+        legendModel = new Quad(1.5f, .1f, new Float3Vector(1, 0, 0.1f));
         legendModel.init(gl);
 
         atmModel = new GeoSphere(60, 60, 53f, false);
@@ -273,7 +274,7 @@ public class WaterCycleWindow implements GLEventListener {
 
         // Here we define a PixelBufferObject, which is used for getting
         // screenshots.
-        finalPBO = new IntPBO(canvasWidth, canvasHeight);
+        finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
         finalPBO.init(gl);
 
         contextOff(drawable);
@@ -288,7 +289,7 @@ public class WaterCycleWindow implements GLEventListener {
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
-        // ESightNewtWindow by adding the line
+        // neonNewtWindow by adding the line
         // glp = GLProfile.get(GLProfile.GL3);
         // Therefore, we extract a GL3 instance, so we cannot make any
         // unfortunate mistakes (calls to methods that are undefined for this
@@ -299,26 +300,27 @@ public class WaterCycleWindow implements GLEventListener {
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
         // Construct a modelview matrix out of camera viewpoint and angle.
-        MatF4 modelViewMatrix = MatrixFMath.lookAt(eye, at, up);
+        Float4Matrix modelViewMatrix = FloatMatrixMath.lookAt(eye, at, up);
 
         // Translate the camera backwards according to the inputhandler's view
         // distance setting.
-        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.translate(new VecF3(0f, 0f, inputHandler.getViewDist())));
+        modelViewMatrix = modelViewMatrix.mul(FloatMatrixMath.translate(new Float3Vector(0f, 0f, inputHandler
+                .getViewDist())));
 
         // Rotate tha camera according to the rotation angles defined in the
         // inputhandler.
-        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationX(inputHandler.getRotation().getX()));
-        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationY(inputHandler.getRotation().getY()));
-        modelViewMatrix = modelViewMatrix.mul(MatrixFMath.rotationZ(inputHandler.getRotation().getZ()));
+        modelViewMatrix = modelViewMatrix.mul(FloatMatrixMath.rotationX(inputHandler.getRotation().getX()));
+        modelViewMatrix = modelViewMatrix.mul(FloatMatrixMath.rotationY(inputHandler.getRotation().getY()));
+        modelViewMatrix = modelViewMatrix.mul(FloatMatrixMath.rotationZ(inputHandler.getRotation().getZ()));
 
         ImauTimedPlayer timer = WaterCyclePanel.getTimer();
         if (timer.isInitialized()) {
             this.timer = timer;
 
-            VecF2 clickCoords = null;
+            Float2Vector clickCoords = null;
 
             // try {
-            // VecF2 selection = this.inputHandler.getSelection();
+            // Float2Vector selection = this.inputHandler.getSelection();
             // float x, y;
             // if (settings.getWindowSelection() == 0) {
             // x = selection.get(0);
@@ -422,21 +424,21 @@ public class WaterCycleWindow implements GLEventListener {
         contextOff(drawable);
     }
 
-    private void displayContext(GL3 gl, ImauTimedPlayer timer, VecF2 clickCoords) {
+    private void displayContext(GL3 gl, ImauTimedPlayer timer, Float2Vector clickCoords) {
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
         final Point4 eye = new Point4((float) (radius * Math.sin(ftheta) * Math.cos(phi)), (float) (radius
                 * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)));
         final Point4 at = new Point4(0.0f, 0.0f, 0.0f);
-        final VecF4 up = new VecF4(0.0f, 1.0f, 0.0f, 0.0f);
+        final Float4Vector up = new Float4Vector(0.0f, 1.0f, 0.0f, 0.0f);
 
-        MatF4 mv = MatrixFMath.lookAt(eye, at, up);
-        mv = mv.mul(MatrixFMath.translate(new VecF3(0f, 0f, inputHandler.getViewDist())));
-        mv = mv.mul(MatrixFMath.rotationX(inputHandler.getRotation().getX()));
-        mv = mv.mul(MatrixFMath.rotationY(inputHandler.getRotation().getY()));
+        Float4Matrix mv = FloatMatrixMath.lookAt(eye, at, up);
+        mv = mv.mul(FloatMatrixMath.translate(new Float3Vector(0f, 0f, inputHandler.getViewDist())));
+        mv = mv.mul(FloatMatrixMath.rotationX(inputHandler.getRotation().getX()));
+        mv = mv.mul(FloatMatrixMath.rotationY(inputHandler.getRotation().getY()));
 
-        drawAtmosphere(gl, mv, atmosphereFBO);
-        // blur(gl, atmosphereFBO, fsq, 1, 2, 4);
+        drawAtmosphere(gl, mv, atmosphereFrameBufferObject);
+        // blur(gl, atmosphereFrameBufferObject, fsq, 1, 2, 4);
 
         SurfaceTextureDescription currentDesc;
 
@@ -486,7 +488,7 @@ public class WaterCycleWindow implements GLEventListener {
                 legend.init(gl);
             }
 
-            drawSingleWindow(gl, mv, i, legend, surface, cachedFBOs[i], clickCoords);
+            drawSingleWindow(gl, mv, i, legend, surface, cachedFrameBufferObjects[i], clickCoords);
 
             if (surface != null) {
                 surface.delete(gl);
@@ -501,22 +503,23 @@ public class WaterCycleWindow implements GLEventListener {
         renderTexturesToScreen(gl);
     }
 
-    private void drawSingleWindow(final GL3 gl, MatF4 mv, int windowIndex, Texture2D legend, Texture2D globe,
-            FBO target, VecF2 clickCoords) {
+    private void drawSingleWindow(final GL3 gl, Float4Matrix mv, int windowIndex, Texture2D legend, Texture2D globe,
+            FrameBufferObject target, Float2Vector clickCoords) {
         // logger.debug("Drawing Text");
-        drawHUDText(gl, windowIndex, hudTextFBO);
+        drawHUDText(gl, windowIndex, hudTextFrameBufferObject);
 
         // logger.debug("Drawing HUD");
-        drawHUDLegend(gl, legend, legendTextureFBO);
+        drawHUDLegend(gl, legend, legendTextureFrameBufferObject);
 
         // logger.debug("Drawing Sphere");
-        drawSphere(gl, mv, globe, sphereTextureFBO, clickCoords);
+        drawSphere(gl, mv, globe, sphereTextureFrameBufferObject, clickCoords);
 
         // logger.debug("Flattening Layers");
-        flattenLayers(gl, hudTextFBO, legendTextureFBO, sphereTextureFBO, atmosphereFBO, target);
+        flattenLayers(gl, hudTextFrameBufferObject, legendTextureFrameBufferObject, sphereTextureFrameBufferObject,
+                atmosphereFrameBufferObject, target);
     }
 
-    private void drawHUDText(GL3 gl, int windowIndex, FBO target) {
+    private void drawHUDText(GL3 gl, int windowIndex, FrameBufferObject target) {
         // testText.setString(gl, "test2", Color4.white, fontSize);
 
         // String randomString = "Random: " + Math.random();
@@ -557,15 +560,15 @@ public class WaterCycleWindow implements GLEventListener {
         }
     }
 
-    private void drawHUDLegend(GL3 gl, Texture2D legendTexture, FBO target) {
+    private void drawHUDLegend(GL3 gl, Texture2D legendTexture, FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
             // Draw legend texture
             shaderProgram_Legend.setUniform("texture_map", legendTexture.getMultitexNumber());
-            shaderProgram_Legend.setUniformMatrix("MVMatrix", new MatF4());
-            shaderProgram_Legend.setUniformMatrix("PMatrix", new MatF4());
+            shaderProgram_Legend.setUniformMatrix("MVMatrix", new Float4Matrix());
+            shaderProgram_Legend.setUniformMatrix("PMatrix", new Float4Matrix());
 
             shaderProgram_Legend.use(gl);
             legendModel.draw(gl, shaderProgram_Legend);
@@ -576,14 +579,15 @@ public class WaterCycleWindow implements GLEventListener {
         }
     }
 
-    private void drawSphere(GL3 gl, MatF4 mv, Texture2D surfaceTexture, FBO target, VecF2 clickCoords) {
+    private void drawSphere(GL3 gl, Float4Matrix mv, Texture2D surfaceTexture, FrameBufferObject target,
+            Float2Vector clickCoords) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
-            final MatF4 p = MatrixFMath.perspective(fovy, aspect, zNear, zFar);
+            final Float4Matrix p = FloatMatrixMath.perspective(fovy, aspect, zNear, zFar);
 
-            shaderProgram_Sphere.setUniformMatrix("MVMatrix", new MatF4(mv));
+            shaderProgram_Sphere.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
             shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
 
             shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
@@ -597,15 +601,15 @@ public class WaterCycleWindow implements GLEventListener {
         }
     }
 
-    private void drawAtmosphere(GL3 gl, MatF4 mv, FBO target) {
+    private void drawAtmosphere(GL3 gl, Float4Matrix mv, FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
-            final MatF4 p = MatrixFMath.perspective(fovy, aspect, zNear, zFar);
-            shaderProgram_Atmosphere.setUniformMatrix("MVMatrix", new MatF4(mv));
+            final Float4Matrix p = FloatMatrixMath.perspective(fovy, aspect, zNear, zFar);
+            shaderProgram_Atmosphere.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
             shaderProgram_Atmosphere.setUniformMatrix("PMatrix", p);
-            shaderProgram_Atmosphere.setUniformMatrix("NormalMatrix", MatrixFMath.getNormalMatrix(mv));
+            shaderProgram_Atmosphere.setUniformMatrix("NormalMatrix", FloatMatrixMath.getNormalMatrix(mv));
 
             shaderProgram_Atmosphere.use(gl);
             atmModel.draw(gl, shaderProgram_Atmosphere);
@@ -616,19 +620,24 @@ public class WaterCycleWindow implements GLEventListener {
         }
     }
 
-    private void flattenLayers(GL3 gl, FBO hudTextFBO, FBO hudLegendFBO, FBO sphereTextureFBO, FBO atmosphereFBO,
-            FBO target) {
+    private void flattenLayers(GL3 gl, FrameBufferObject hudTextFrameBufferObject,
+            FrameBufferObject hudLegendFrameBufferObject, FrameBufferObject sphereTextureFrameBufferObject,
+            FrameBufferObject atmosphereFrameBufferObject, FrameBufferObject target) {
         try {
             target.bind(gl);
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
-            shaderProgram_FlattenLayers.setUniform("textTex", hudTextFBO.getTexture().getMultitexNumber());
-            shaderProgram_FlattenLayers.setUniform("legendTex", hudLegendFBO.getTexture().getMultitexNumber());
-            shaderProgram_FlattenLayers.setUniform("dataTex", sphereTextureFBO.getTexture().getMultitexNumber());
-            shaderProgram_FlattenLayers.setUniform("atmosphereTex", atmosphereFBO.getTexture().getMultitexNumber());
+            shaderProgram_FlattenLayers
+                    .setUniform("textTex", hudTextFrameBufferObject.getTexture().getMultitexNumber());
+            shaderProgram_FlattenLayers.setUniform("legendTex", hudLegendFrameBufferObject.getTexture()
+                    .getMultitexNumber());
+            shaderProgram_FlattenLayers.setUniform("dataTex", sphereTextureFrameBufferObject.getTexture()
+                    .getMultitexNumber());
+            shaderProgram_FlattenLayers.setUniform("atmosphereTex", atmosphereFrameBufferObject.getTexture()
+                    .getMultitexNumber());
 
-            shaderProgram_FlattenLayers.setUniformMatrix("MVMatrix", new MatF4());
-            shaderProgram_FlattenLayers.setUniformMatrix("PMatrix", new MatF4());
+            shaderProgram_FlattenLayers.setUniformMatrix("MVMatrix", new Float4Matrix());
+            shaderProgram_FlattenLayers.setUniformMatrix("PMatrix", new Float4Matrix());
 
             shaderProgram_FlattenLayers.setUniform("scrWidth", canvasWidth);
             shaderProgram_FlattenLayers.setUniform("scrHeight", canvasHeight);
@@ -642,12 +651,12 @@ public class WaterCycleWindow implements GLEventListener {
         }
     }
 
-    private void blur(GL3 gl, FBO target, Quad fullScreenQuad, int passes, int blurType, float blurSize) {
+    private void blur(GL3 gl, FrameBufferObject target, Quad fullScreenQuad, int passes, int blurType, float blurSize) {
 
         shaderProgram_GaussianBlur.setUniform("Texture", target.getTexture().getMultitexNumber());
 
-        shaderProgram_GaussianBlur.setUniformMatrix("PMatrix", new MatF4());
-        shaderProgram_GaussianBlur.setUniformMatrix("MVMatrix", new MatF4());
+        shaderProgram_GaussianBlur.setUniformMatrix("PMatrix", new Float4Matrix());
+        shaderProgram_GaussianBlur.setUniformMatrix("MVMatrix", new Float4Matrix());
 
         shaderProgram_GaussianBlur.setUniform("scrWidth", target.getTexture().getWidth());
         shaderProgram_GaussianBlur.setUniform("scrHeight", target.getTexture().getHeight());
@@ -687,12 +696,12 @@ public class WaterCycleWindow implements GLEventListener {
             gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
             for (int i = 0; i < cachedScreens; i++) {
-                shaderProgram_PostProcess.setUniform("sphereTexture_" + i, cachedFBOs[i].getTexture()
+                shaderProgram_PostProcess.setUniform("sphereTexture_" + i, cachedFrameBufferObjects[i].getTexture()
                         .getMultitexNumber());
             }
 
-            shaderProgram_PostProcess.setUniformMatrix("MVMatrix", new MatF4());
-            shaderProgram_PostProcess.setUniformMatrix("PMatrix", new MatF4());
+            shaderProgram_PostProcess.setUniformMatrix("MVMatrix", new Float4Matrix());
+            shaderProgram_PostProcess.setUniformMatrix("PMatrix", new Float4Matrix());
 
             shaderProgram_PostProcess.setUniform("scrWidth", canvasWidth);
             shaderProgram_PostProcess.setUniform("scrHeight", canvasHeight);
@@ -720,33 +729,33 @@ public class WaterCycleWindow implements GLEventListener {
         // dates = new MultiColorText[cachedScreens];
         // dataSets = new MultiColorText[cachedScreens];
 
-        if (atmosphereFBO != null) {
-            atmosphereFBO.delete(gl);
+        if (atmosphereFrameBufferObject != null) {
+            atmosphereFrameBufferObject.delete(gl);
         }
-        if (hudTextFBO != null) {
-            hudTextFBO.delete(gl);
+        if (hudTextFrameBufferObject != null) {
+            hudTextFrameBufferObject.delete(gl);
         }
-        if (legendTextureFBO != null) {
-            legendTextureFBO.delete(gl);
+        if (legendTextureFrameBufferObject != null) {
+            legendTextureFrameBufferObject.delete(gl);
         }
-        if (sphereTextureFBO != null) {
-            sphereTextureFBO.delete(gl);
+        if (sphereTextureFrameBufferObject != null) {
+            sphereTextureFrameBufferObject.delete(gl);
         }
 
-        logger.debug("FBO initialization with width: " + canvasWidth + ", height: " + canvasHeight);
+        logger.debug("FrameBufferObject initialization with width: " + canvasWidth + ", height: " + canvasHeight);
 
-        atmosphereFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
-        hudTextFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
-        legendTextureFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
-        sphereTextureFBO = new FBO(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
+        atmosphereFrameBufferObject = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE0);
+        hudTextFrameBufferObject = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE1);
+        legendTextureFrameBufferObject = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE2);
+        sphereTextureFrameBufferObject = new FrameBufferObject(canvasWidth, canvasHeight, GL.GL_TEXTURE3);
 
-        atmosphereFBO.init(gl);
-        hudTextFBO.init(gl);
-        legendTextureFBO.init(gl);
-        sphereTextureFBO.init(gl);
+        atmosphereFrameBufferObject.init(gl);
+        hudTextFrameBufferObject.init(gl);
+        legendTextureFrameBufferObject.init(gl);
+        sphereTextureFrameBufferObject.init(gl);
 
-        if (cachedFBOs == null || cachedScreens != cachedFBOs.length) {
-            cachedFBOs = new FBO[cachedScreens];
+        if (cachedFrameBufferObjects == null || cachedScreens != cachedFrameBufferObjects.length) {
+            cachedFrameBufferObjects = new FrameBufferObject[cachedScreens];
         }
 
         logger.debug("CACHED SCREENS: " + cachedScreens);
@@ -754,13 +763,13 @@ public class WaterCycleWindow implements GLEventListener {
         for (int i = 0; i < cachedScreens; i++) {
             cachedTextureDescriptions[i] = settings.getSurfaceDescription(i);
 
-            if (cachedFBOs[i] != null) {
-                cachedFBOs[i].delete(gl);
+            if (cachedFrameBufferObjects[i] != null) {
+                cachedFrameBufferObjects[i].delete(gl);
             }
-            cachedFBOs[i] = new FBO(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
+            cachedFrameBufferObjects[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
 
-            logger.debug("Cahced FBO init nr: " + i);
-            cachedFBOs[i].init(gl);
+            logger.debug("Cahced FrameBufferObject init nr: " + i);
+            cachedFrameBufferObjects[i].init(gl);
 
             // String text = "garbled!";
 
@@ -812,7 +821,7 @@ public class WaterCycleWindow implements GLEventListener {
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
-        // ESightNewtWindow by adding the line
+        // neonNewtWindow by adding the line
         // glp = GLProfile.get(GLProfile.GL3);
         // Therefore, we extract a GL3 instance, so we cannot make any
         // unfortunate mistakes (calls to methods that are undefined for this
@@ -843,7 +852,7 @@ public class WaterCycleWindow implements GLEventListener {
 
         // Once we have the context current, we can extract the OpenGL instance
         // from it. We have defined a OpenGL 3.0 instance in the
-        // ESightNewtWindow by adding the line
+        // neonNewtWindow by adding the line
         // glp = GLProfile.get(GLProfile.GL3);
         // Therefore, we extract a GL3 instance, so we cannot make any
         // unfortunate mistakes (calls to methods that are undefined for this
@@ -870,13 +879,13 @@ public class WaterCycleWindow implements GLEventListener {
         fsq.delete(gl);
 
         // Delete the FrameBuffer Objects.
-        atmosphereFBO.delete(gl);
-        hudTextFBO.delete(gl);
-        legendTextureFBO.delete(gl);
-        sphereTextureFBO.delete(gl);
+        atmosphereFrameBufferObject.delete(gl);
+        hudTextFrameBufferObject.delete(gl);
+        legendTextureFrameBufferObject.delete(gl);
+        sphereTextureFrameBufferObject.delete(gl);
 
         for (int i = 0; i < cachedScreens; i++) {
-            cachedFBOs[i].delete(gl);
+            cachedFrameBufferObjects[i].delete(gl);
         }
 
         contextOff(drawable);

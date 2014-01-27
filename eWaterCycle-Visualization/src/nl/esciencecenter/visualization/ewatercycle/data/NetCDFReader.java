@@ -6,10 +6,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
-import nl.esciencecenter.esight.swing.ColormapInterpreter;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Color;
-import nl.esciencecenter.esight.swing.ColormapInterpreter.Dimensions;
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
+import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.ewatercycle.WaterCycleSettings;
 
 import org.slf4j.Logger;
@@ -45,11 +46,17 @@ public class NetCDFReader {
         fillValues = new HashMap<String, Float>();
 
         List<Variable> vars = ncfile.getVariables();
+        List<Dimension> dims = ncfile.getDimensions();
+
         for (Variable v : vars) {
             String name = v.getFullName();
-            variables.put(name, v);
-            units.put(name, v.getUnitsString());
-            dimensions.put(name, v.getDimensions());
+
+            boolean variableIsActuallyADimension = false;
+            for (Dimension d : dims) {
+                if (d.getName().compareTo(name) == 0) {
+                    variableIsActuallyADimension = true;
+                }
+            }
 
             ArrayList<Integer> shape = new ArrayList<Integer>();
             for (int i : v.getShape()) {
@@ -57,11 +64,18 @@ public class NetCDFReader {
             }
             shapes.put(name, shape);
 
-            for (Attribute a : v.getAttributes()) {
-                if (a.getName().compareTo("_FillValue") == 0) {
-                    float fillValue = a.getNumericValue().floatValue();
-                    fillValues.put(name, fillValue);
+            if (!variableIsActuallyADimension) {
+                variables.put(name, v);
+                units.put(name, v.getUnitsString());
+
+                for (Attribute a : v.getAttributes()) {
+                    if (a.getName().compareTo("_FillValue") == 0) {
+                        float fillValue = a.getNumericValue().floatValue();
+                        fillValues.put(name, fillValue);
+                    }
                 }
+            } else {
+                dimensions.put(name, v.getDimensions());
             }
         }
     }
@@ -71,21 +85,55 @@ public class NetCDFReader {
     }
 
     public int getAvailableFrames() {
-        return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(0);
+        int value = -1;
+        for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
+            String name = shapeEntry.getKey();
+            if (name.compareTo("time") == 0) {
+                List<Integer> shape = shapeEntry.getValue();
+                for (int i : shape) {
+                    value = i;
+                }
+            }
+        }
+
+        return value;
     }
 
     public int getLatSize() {
-        return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(1);
+        int value = -1;
+        for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
+            String name = shapeEntry.getKey();
+            if (name.compareTo("lat") == 0) {
+                List<Integer> shape = shapeEntry.getValue();
+                for (int i : shape) {
+                    value = i;
+                }
+            }
+        }
+
+        return value;
     }
 
     public int getLonSize() {
-        return shapes.get(shapes.keySet().toArray(new String[] {})[2]).get(2);
+        int value = -1;
+        for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
+            String name = shapeEntry.getKey();
+            if (name.compareTo("lon") == 0) {
+                List<Integer> shape = shapeEntry.getValue();
+                for (int i : shape) {
+                    value = i;
+                }
+            }
+        }
+
+        return value;
     }
 
     public ArrayList<String> getVariableNames() {
         ArrayList<String> result = new ArrayList<String>();
         for (String s : variables.keySet()) {
             result.add(s);
+            System.out.println(s);
         }
         return result;
     }

@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import javax.swing.JFormattedTextField;
 import javax.swing.JSlider;
 
-import nl.esciencecenter.esight.input.InputHandler;
-import nl.esciencecenter.esight.math.VecF3;
-import nl.esciencecenter.esight.math.VectorFMath;
-import nl.esciencecenter.esight.swing.CustomJSlider;
+import nl.esciencecenter.neon.input.InputHandler;
+import nl.esciencecenter.neon.math.Float3Vector;
+import nl.esciencecenter.neon.math.FloatVectorMath;
+import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.visualization.ewatercycle.WaterCycleSettings;
 
 import org.slf4j.Logger;
@@ -46,7 +46,7 @@ public class ImauTimedPlayer implements Runnable {
 
     private final long waittime = settings.getWaittimeMovie();
 
-    private final ArrayList<VecF3> bezierPoints, fixedPoints;
+    private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
     private final ArrayList<Integer> bezierSteps;
 
     private File fileDS1;
@@ -60,37 +60,37 @@ public class ImauTimedPlayer implements Runnable {
         this.frameCounter = frameCounter;
         this.inputHandler = InputHandler.getInstance();
 
-        bezierPoints = new ArrayList<VecF3>();
+        bezierPoints = new ArrayList<Float3Vector>();
 
-        fixedPoints = new ArrayList<VecF3>();
+        fixedPoints = new ArrayList<Float3Vector>();
         bezierSteps = new ArrayList<Integer>();
 
-        fixedPoints.add(new VecF3(394, 624, -80)); // Europa
+        fixedPoints.add(new Float3Vector(394, 624, -80)); // Europa
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(379, 702, -140)); // Gulf Stream
+        fixedPoints.add(new Float3Vector(379, 702, -140)); // Gulf Stream
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(359, 651, -140)); // Equator
+        fixedPoints.add(new Float3Vector(359, 651, -140)); // Equator
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(320, 599, -90)); // South Africa
+        fixedPoints.add(new Float3Vector(320, 599, -90)); // South Africa
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(339, 540, -140)); // India
+        fixedPoints.add(new Float3Vector(339, 540, -140)); // India
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(382, 487, -80)); // Japan
+        fixedPoints.add(new Float3Vector(382, 487, -80)); // Japan
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(353, 360, -110)); // Panama
+        fixedPoints.add(new Float3Vector(353, 360, -110)); // Panama
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(311, 326, -110)); // Argentina
+        fixedPoints.add(new Float3Vector(311, 326, -110)); // Argentina
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(412, 302, -140)); // Greenland
+        fixedPoints.add(new Float3Vector(412, 302, -140)); // Greenland
         bezierSteps.add(60);
-        fixedPoints.add(new VecF3(394, 264, -80)); // Europa
+        fixedPoints.add(new Float3Vector(394, 264, -80)); // Europa
 
-        VecF3 lastPoint = fixedPoints.get(0);
-        VecF3 still = new VecF3(0, 0, 0);
+        Float3Vector lastPoint = fixedPoints.get(0);
+        Float3Vector still = new Float3Vector(0, 0, 0);
         for (int i = 1; i < fixedPoints.size(); i++) {
-            VecF3 newPoint = fixedPoints.get(i);
+            Float3Vector newPoint = fixedPoints.get(i);
 
-            VecF3[] bezierPointsTemp = VectorFMath.degreesBezierCurve(bezierSteps.get(i - 1), lastPoint, still, still,
+            Float3Vector[] bezierPointsTemp = FloatVectorMath.degreesBezierCurve(bezierSteps.get(i - 1), lastPoint, still, still,
                     newPoint);
 
             for (int j = 1; j < bezierPointsTemp.length; j++) {
@@ -109,6 +109,21 @@ public class ImauTimedPlayer implements Runnable {
         timeBar.setMaximum(0);
     }
 
+    public void init(File[] files) {
+        this.dsManager = new ImauDatasetManager(files);
+        this.texStorage = dsManager.getTextureStorage();
+
+        frameNumber = dsManager.getFrameNumberOfIndex(0);
+        final int initialMaxBar = dsManager.getNumFrames() - 1;
+
+        timeBar.setMaximum(initialMaxBar);
+        timeBar.setMinimum(0);
+
+        updateFrame(frameNumber, true);
+
+        initialized = true;
+    }
+
     public void init(File fileDS1) {
         this.fileDS1 = fileDS1;
         this.fileDS2 = null;
@@ -116,7 +131,7 @@ public class ImauTimedPlayer implements Runnable {
         this.texStorage = dsManager.getTextureStorage();
 
         frameNumber = dsManager.getFrameNumberOfIndex(0);
-        final int initialMaxBar = dsManager.getNumFiles() - 1;
+        final int initialMaxBar = dsManager.getNumFrames() - 1;
 
         timeBar.setMaximum(initialMaxBar);
         timeBar.setMinimum(0);
@@ -144,7 +159,7 @@ public class ImauTimedPlayer implements Runnable {
         this.texStorage = dsManager.getTextureStorage();
 
         frameNumber = dsManager.getFrameNumberOfIndex(0);
-        final int initialMaxBar = dsManager.getNumFiles() - 1;
+        final int initialMaxBar = dsManager.getNumFrames() - 1;
 
         timeBar.setMaximum(initialMaxBar);
         timeBar.setMinimum(0);
@@ -215,7 +230,7 @@ public class ImauTimedPlayer implements Runnable {
 
     public synchronized void setScreenshotNeeded(boolean value) {
         if (value) {
-            final VecF3 rotation = inputHandler.getRotation();
+            final Float3Vector rotation = inputHandler.getRotation();
             final float viewDist = inputHandler.getViewDist();
 
             System.out.println("Simulation frame: " + frameNumber + ", Rotation x: " + rotation.getX() + " y: "
@@ -241,10 +256,10 @@ public class ImauTimedPlayer implements Runnable {
             System.exit(1);
         }
 
-        inputHandler.setRotation(new VecF3(settings.getInitialRotationX(), settings.getInitialRotationY(), 0f));
+        inputHandler.setRotation(new Float3Vector(settings.getInitialRotationX(), settings.getInitialRotationY(), 0f));
         inputHandler.setViewDist(settings.getInitialZoom());
 
-        // inputHandler.setRotation(new VecF3(bezierPoints.get(0).get(0),
+        // inputHandler.setRotation(new Float3Vector(bezierPoints.get(0).get(0),
         // bezierPoints.get(0).get(1), 0f));
         // inputHandler.setViewDist(bezierPoints.get(0).get(2));
 
@@ -258,7 +273,7 @@ public class ImauTimedPlayer implements Runnable {
                         startTime = System.currentTimeMillis();
 
                         if (currentState == states.MOVIEMAKING) {
-                            final VecF3 rotation = inputHandler.getRotation();
+                            final Float3Vector rotation = inputHandler.getRotation();
                             if (settings.getMovieRotate()) {
                                 // rotation.set(
                                 // 1,
@@ -266,7 +281,7 @@ public class ImauTimedPlayer implements Runnable {
                                 // + settings
                                 // .getMovieRotationSpeedDef());
                                 // inputHandler.setRotation(rotation);
-                                inputHandler.setRotation(new VecF3(bezierPoints.get(frameNumber).getX(), bezierPoints
+                                inputHandler.setRotation(new Float3Vector(bezierPoints.get(frameNumber).getX(), bezierPoints
                                         .get(frameNumber).getY(), 0f));
                                 inputHandler.setViewDist(bezierPoints.get(frameNumber).getZ());
                                 setScreenshotNeeded(true);

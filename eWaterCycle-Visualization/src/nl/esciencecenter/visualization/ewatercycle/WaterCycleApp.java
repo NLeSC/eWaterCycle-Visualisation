@@ -11,7 +11,7 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import nl.esciencecenter.esight.ESightNewtWindow;
+import nl.esciencecenter.neon.NeonNewtWindow;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,7 @@ public class WaterCycleApp {
     private final static Logger logger = LoggerFactory.getLogger(WaterCycleApp.class);
 
     private static JFrame frame;
-    private static WaterCyclePanel imauPanel;
+    private static WaterCyclePanel panel;
     private static WaterCycleWindow imauWindow;
 
     public static void main(String[] arguments) {
@@ -53,12 +53,12 @@ public class WaterCycleApp {
         logger.debug("PATH:" + path);
 
         // Create the Swing interface elements
-        imauPanel = new WaterCyclePanel(path);
+        panel = new WaterCyclePanel(path);
 
         // Create the GLEventListener
         imauWindow = new WaterCycleWindow(WaterCycleInputHandler.getInstance());
 
-        new ESightNewtWindow(true, imauWindow.getInputHandler(), imauWindow, settings.getDefaultScreenWidth(),
+        new NeonNewtWindow(true, imauWindow.getInputHandler(), imauWindow, settings.getDefaultScreenWidth(),
                 settings.getDefaultScreenHeight(), "eWaterCycle Visualization");
 
         // Create the frame
@@ -81,7 +81,7 @@ public class WaterCycleApp {
             @Override
             public void run() {
                 try {
-                    frame.getContentPane().add(imauPanel);
+                    frame.getContentPane().add(panel);
                 } catch (final Exception e) {
                     e.printStackTrace(System.err);
                     System.exit(1);
@@ -108,7 +108,7 @@ public class WaterCycleApp {
     }
 
     public static Point getCanvaslocation() {
-        return imauPanel.getCanvasLocation();
+        return panel.getCanvasLocation();
     }
 
     public static void feedMouseEventToPanel(int x, int y) {
