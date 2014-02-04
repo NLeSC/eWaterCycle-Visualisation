@@ -1,7 +1,12 @@
 package nl.esciencecenter.visualization.ewatercycle.data;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,14 +41,23 @@ public class NetCDFReader {
     private final HashMap<String, List<Integer>> shapes;
     private final HashMap<String, Float> fillValues;
 
+    private final HashMap<String, Float> mins;
+    private final HashMap<String, Float> maxes;
+
+    private final String path;
+
     public NetCDFReader(File file) {
         this.ncfile = open(file);
+        path = file.getParent();
 
         variables = new HashMap<String, Variable>();
         units = new HashMap<String, String>();
         dimensions = new HashMap<String, List<Dimension>>();
         shapes = new HashMap<String, List<Integer>>();
         fillValues = new HashMap<String, Float>();
+
+        mins = new HashMap<String, Float>();
+        maxes = new HashMap<String, Float>();
 
         List<Variable> vars = ncfile.getVariables();
         List<Dimension> dims = ncfile.getDimensions();
@@ -103,7 +117,7 @@ public class NetCDFReader {
         int value = -1;
         for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
             String name = shapeEntry.getKey();
-            if (name.compareTo("lat") == 0) {
+            if (name.contains("lat")) {
                 List<Integer> shape = shapeEntry.getValue();
                 for (int i : shape) {
                     value = i;
@@ -118,7 +132,7 @@ public class NetCDFReader {
         int value = -1;
         for (Entry<String, List<Integer>> shapeEntry : shapes.entrySet()) {
             String name = shapeEntry.getKey();
-            if (name.compareTo("lon") == 0) {
+            if (name.contains("lon")) {
                 List<Integer> shape = shapeEntry.getValue();
                 for (int i : shape) {
                     value = i;
@@ -180,6 +194,124 @@ public class NetCDFReader {
         result.rewind();
 
         return result;
+    }
+
+    public void determineMinMax(String variableName) {
+        // Check the settings first to see if this value was predefined.
+        float settingsMin = settings.getVarMin(variableName);
+        float settingsMax = settings.getVarMax(variableName);
+        if (!Float.isNaN(settingsMin)) {
+            mins.put(variableName, settingsMin);
+        }
+        if (!Float.isNaN(settingsMax)) {
+            maxes.put(variableName, settingsMax);
+        }
+
+        // Then Check if we have made a cache file earlier
+        File cacheFile = new File(path + File.separator + ".visualizationCache");
+        if (cacheFile.exists()) {
+            BufferedReader in;
+            String str;
+
+            try {
+                in = new BufferedReader(new FileReader(cacheFile));
+                while ((str = in.readLine()) != null) {
+                    if (str.contains(variableName) && str.contains("min")) {
+                        String[] substrings = str.split(" ");
+                        float min = Float.parseFloat(substrings[2]);
+                        mins.put(variableName, min);
+                        settings.setVarMin(variableName, min);
+                    }
+                    if (str.contains(variableName) && str.contains("max")) {
+                        String[] substrings = str.split(" ");
+                        float max = Float.parseFloat(substrings[2]);
+                        maxes.put(variableName, max);
+                        settings.setVarMax(variableName, max);
+                    }
+                }
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        float currentMax = Float.MIN_VALUE;
+        float currentMin = Float.MAX_VALUE;
+        float fillValue = fillValues.get(variableName);
+
+        if (!(mins.containsKey(variableName) && maxes.containsKey(variableName))) {
+            Variable variable = variables.get(variableName);
+            int times = shapes.get(variableName).get(0);
+            int lats = shapes.get(variableName).get(1);
+            int lons = shapes.get(variableName).get(2);
+
+            try {
+                for (int time = 0; time < times; time++) {
+                    Array netCDFArray = variable.slice(0, time).read();
+                    float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
+
+                    for (int lat = 0; lat < lats; lat++) {
+                        for (int lon = lons - 1; lon >= 0; lon--) {
+                            float pieceOfData = data[lat * lons + lon];
+                            if (pieceOfData != fillValue) {
+                                if (pieceOfData < currentMin) {
+                                    currentMin = pieceOfData;
+                                }
+                                if (pieceOfData > currentMax) {
+                                    currentMax = pieceOfData;
+                                }
+                            }
+                        }
+                    }
+                    System.out.print("t");
+                }
+                System.out.println();
+                System.out.println("Min determined: " + currentMin);
+                System.out.println("Max determined: " + currentMax);
+
+                // Then write to cache file for later
+                if (!cacheFile.exists()) {
+                    cacheFile.createNewFile();
+                }
+
+                try {
+                    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
+                    out.println(variableName + " min " + currentMin);
+                    mins.put(variableName, currentMin);
+                    settings.setVarMin(variableName, currentMin);
+
+                    out.println(variableName + " max " + currentMax);
+                    maxes.put(variableName, currentMax);
+                    settings.setVarMax(variableName, currentMax);
+
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InvalidRangeException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public float getMinValue(String variableName) {
+        if (mins.containsKey(variableName)) {
+            return mins.get(variableName);
+        } else {
+            determineMinMax(variableName);
+            return mins.get(variableName);
+        }
+    }
+
+    public float getMaxValue(String variableName) {
+        if (mins.containsKey(variableName)) {
+            return mins.get(variableName);
+        } else {
+            determineMinMax(variableName);
+            return mins.get(variableName);
+        }
     }
 
     @Override

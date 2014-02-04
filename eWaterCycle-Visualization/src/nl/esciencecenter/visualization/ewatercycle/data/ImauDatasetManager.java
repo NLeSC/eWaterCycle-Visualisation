@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.media.opengl.GL3;
+
 import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
@@ -28,7 +30,8 @@ public class ImauDatasetManager {
     // private NetCDFReader ncrSatDegUpp000005, ncrSatDegUpp005030,
     // ncrSatDegLow030150, ncrPrecipitation, ncrTemperature;
 
-    private TextureStorage texStorage;
+    // private TextureStorage texStorage;
+    private EfficientTextureStorage effTexStorage;
 
     private int latArraySize;
     private int lonArraySize;
@@ -177,6 +180,9 @@ public class ImauDatasetManager {
                 for (String varName : varNames) {
                     readers.put(varName, ncr);
                     System.out.println(varName + " added to available variables.");
+
+                    // And determine the bounds
+                    ncr.determineMinMax(varName);
                 }
                 if (init) {
                     int numFrames = ncr.getAvailableFrames();
@@ -187,8 +193,12 @@ public class ImauDatasetManager {
             }
         }
 
-        texStorage = new TextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
-                lonArraySize, latArraySize);
+        // texStorage = new TextureStorage(this, settings.getNumScreensRows() *
+        // settings.getNumScreensCols(),
+        // lonArraySize, latArraySize);
+
+        effTexStorage = new EfficientTextureStorage(this, settings.getNumScreensRows() * settings.getNumScreensCols(),
+                lonArraySize, latArraySize, GL3.GL_TEXTURE4, GL3.GL_TEXTURE5);
 
     }
 
@@ -224,7 +234,8 @@ public class ImauDatasetManager {
         }
 
         ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(), varName, frameNumber);
-        texStorage.setSurfaceImage(desc, surfaceBuffer);
+        // texStorage.setSurfaceImage(desc, surfaceBuffer);
+        effTexStorage.setSurfaceImage(desc, surfaceBuffer);
 
         Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName), settings.getCurrentVarMax(varName));
 
@@ -248,11 +259,16 @@ public class ImauDatasetManager {
 
         outBuf.flip();
 
-        texStorage.setLegendImage(desc, outBuf);
+        // texStorage.setLegendImage(desc, outBuf);
+        effTexStorage.setLegendImage(desc, outBuf);
     }
 
-    public TextureStorage getTextureStorage() {
-        return texStorage;
+    // public TextureStorage getTextureStorage() {
+    // return texStorage;
+    // }
+
+    public EfficientTextureStorage getEfficientTextureStorage() {
+        return effTexStorage;
     }
 
     public int getFrameNumberOfIndex(int index) {
@@ -305,5 +321,13 @@ public class ImauDatasetManager {
 
     public int getImageHeight() {
         return latArraySize;
+    }
+
+    public float getMinValueContainedInDataset(String varName) {
+        return readers.get(varName).getMinValue(varName);
+    }
+
+    public float getMaxValueContainedInDataset(String varName) {
+        return readers.get(varName).getMaxValue(varName);
     }
 }

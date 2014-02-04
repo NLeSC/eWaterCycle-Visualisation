@@ -176,7 +176,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         add(bottomPanel, BorderLayout.SOUTH);
 
         // Read command line file information
-        handlePresetFiles();
+        // handlePresetFiles();
 
         setTweakState(TweakState.DATA);
 
@@ -411,169 +411,139 @@ public class WaterCyclePanel extends NeonInterfacePanel {
     private void createDataTweakPanel() {
         dataConfig.removeAll();
 
-        final ArrayList<Component> vcomponents = new ArrayList<Component>();
-        JLabel windowlabel = new JLabel("Window Selection");
-        windowlabel.setMaximumSize(new Dimension(200, 25));
-        windowlabel.setMaximumSize(new Dimension(240, 25));
-        windowlabel.setAlignmentX(CENTER_ALIGNMENT);
+        if (timer.isInitialized()) {
+            final ArrayList<Component> vcomponents = new ArrayList<Component>();
+            JLabel windowlabel = new JLabel("Window Selection");
+            windowlabel.setMaximumSize(new Dimension(200, 25));
+            windowlabel.setMaximumSize(new Dimension(240, 25));
+            windowlabel.setAlignmentX(CENTER_ALIGNMENT);
 
-        vcomponents.add(windowlabel);
-        vcomponents.add(Box.createHorizontalGlue());
+            vcomponents.add(windowlabel);
+            vcomponents.add(Box.createHorizontalGlue());
 
-        String[] screenSelection = new String[1 + settings.getNumScreensRows() * settings.getNumScreensCols()];
-        screenSelection[0] = "All Screens";
-        for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
-            screenSelection[i + 1] = "Screen Number " + i;
-        }
-
-        final JComboBox comboBox = new JComboBox(screenSelection);
-        comboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                int selection = comboBox.getSelectedIndex();
-                settings.setWindowSelection(selection);
+            String[] screenSelection = new String[1 + settings.getNumScreensRows() * settings.getNumScreensCols()];
+            screenSelection[0] = "All Screens";
+            for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
+                screenSelection[i + 1] = "Screen Number " + i;
             }
-        });
-        comboBox.setMaximumSize(new Dimension(200, 25));
-        comboBox.setMaximumSize(new Dimension(240, 25));
-        vcomponents.add(comboBox);
-        vcomponents.add(GoggleSwing.verticalStrut(5));
 
-        dataConfig.add(GoggleSwing.vBoxedComponents(vcomponents, true));
-
-        String[] dataModes = SurfaceTextureDescription.getDataModes();
-
-        final String[] colorMaps = ColormapInterpreter.getColormapNames();
-
-        for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
-            final int currentScreen = i;
-
-            final ArrayList<Component> screenVcomponents = new ArrayList<Component>();
-
-            JLabel screenLabel = new JLabel("Screen " + currentScreen);
-            screenVcomponents.add(screenLabel);
-
-            SurfaceTextureDescription selectionDescription = settings.getSurfaceDescription(currentScreen);
-
-            final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
-
-            JComboBox dataModeComboBox = new JComboBox(dataModes);
-            ActionListener al = new ActionListener() {
+            final JComboBox comboBox = new JComboBox(screenSelection);
+            comboBox.addItemListener(new ItemListener() {
                 @Override
-                public void actionPerformed(ActionEvent e) {
-                    JComboBox cb = (JComboBox) e.getSource();
-                    int selection = cb.getSelectedIndex();
+                public void itemStateChanged(ItemEvent e) {
+                    int selection = comboBox.getSelectedIndex();
+                    settings.setWindowSelection(selection);
+                }
+            });
+            comboBox.setMaximumSize(new Dimension(200, 25));
+            comboBox.setMaximumSize(new Dimension(240, 25));
+            vcomponents.add(comboBox);
+            vcomponents.add(GoggleSwing.verticalStrut(5));
 
-                    if (selection == 1) {
-                        settings.setDataMode(currentScreen, false, false, true);
-                    } else if (selection == 2) {
-                        settings.setDataMode(currentScreen, false, true, false);
-                    } else {
-                        settings.setDataMode(currentScreen, false, false, false);
+            dataConfig.add(GoggleSwing.vBoxedComponents(vcomponents, true));
+
+            String[] dataModes = SurfaceTextureDescription.getDataModes();
+
+            final String[] colorMaps = ColormapInterpreter.getColormapNames();
+
+            for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
+                final int currentScreen = i;
+
+                final ArrayList<Component> screenVcomponents = new ArrayList<Component>();
+
+                JLabel screenLabel = new JLabel("Screen " + currentScreen);
+                screenVcomponents.add(screenLabel);
+
+                SurfaceTextureDescription selectionDescription = settings.getSurfaceDescription(currentScreen);
+
+                final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
+
+                JComboBox dataModeComboBox = new JComboBox(dataModes);
+                ActionListener al = new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        JComboBox cb = (JComboBox) e.getSource();
+                        int selection = cb.getSelectedIndex();
+
+                        if (selection == 1) {
+                            settings.setDataMode(currentScreen, false, false, true);
+                        } else if (selection == 2) {
+                            settings.setDataMode(currentScreen, false, true, false);
+                        } else {
+                            settings.setDataMode(currentScreen, false, false, false);
+                        }
                     }
-                }
-            };
-            dataModeComboBox.addActionListener(al);
-            dataModeComboBox.setSelectedIndex(selectionDescription.getDataModeIndex());
-            dataModeComboBox.setMinimumSize(new Dimension(50, 25));
-            dataModeComboBox.setMaximumSize(new Dimension(100, 25));
-            screenHcomponents.add(dataModeComboBox);
+                };
+                dataModeComboBox.addActionListener(al);
+                dataModeComboBox.setSelectedIndex(selectionDescription.getDataModeIndex());
+                dataModeComboBox.setMinimumSize(new Dimension(50, 25));
+                dataModeComboBox.setMaximumSize(new Dimension(100, 25));
+                screenHcomponents.add(dataModeComboBox);
 
-            final JComboBox variablesComboBox = new JComboBox(variables.toArray(new String[0]));
-            variablesComboBox.setSelectedItem(selectionDescription.getVarName());
-            variablesComboBox.setMinimumSize(new Dimension(50, 25));
-            variablesComboBox.setMaximumSize(new Dimension(240, 25));
-            screenHcomponents.add(variablesComboBox);
+                final JComboBox variablesComboBox = new JComboBox(variables.toArray(new String[0]));
+                variablesComboBox.setSelectedItem(selectionDescription.getVarName());
+                variablesComboBox.setMinimumSize(new Dimension(50, 25));
+                variablesComboBox.setMaximumSize(new Dimension(240, 25));
+                screenHcomponents.add(variablesComboBox);
 
-            screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
+                screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
 
-            final JComboBox colorMapsComboBox = ColormapInterpreter.getLegendJComboBox(new Dimension(240, 25));
-            colorMapsComboBox
-                    .setSelectedItem(ColormapInterpreter.getIndexOfColormap(selectionDescription.getColorMap()));
-            colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
-            colorMapsComboBox.setMaximumSize(new Dimension(240, 25));
-            screenVcomponents.add(colorMapsComboBox);
+                final JComboBox colorMapsComboBox = ColormapInterpreter.getLegendJComboBox(new Dimension(240, 25));
+                colorMapsComboBox.setSelectedItem(ColormapInterpreter.getIndexOfColormap(selectionDescription
+                        .getColorMap()));
+                colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
+                colorMapsComboBox.setMaximumSize(new Dimension(240, 25));
+                screenVcomponents.add(colorMapsComboBox);
 
-            final RangeSlider selectionLegendSlider = new RangeSlider();
-            ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(selectionDescription.getColorMap());
-            selectionLegendSlider.setMinimum(0);
-            selectionLegendSlider.setMaximum(100);
-            selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
-            selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
+                final RangeSlider selectionLegendSlider = new RangeSlider();
+                ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(selectionDescription.getColorMap());
+                selectionLegendSlider.setMinimum(0);
+                selectionLegendSlider.setMaximum(100);
+                selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
+                selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
 
-            colorMapsComboBox.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    settings.setColorMap(currentScreen, colorMaps[colorMapsComboBox.getSelectedIndex()]);
+                colorMapsComboBox.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        settings.setColorMap(currentScreen, colorMaps[colorMapsComboBox.getSelectedIndex()]);
 
-                    ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(colorMaps[colorMapsComboBox
-                            .getSelectedIndex()]);
-                    selectionLegendSlider.invalidate();
-                }
-            });
+                        ((RangeSliderUI) selectionLegendSlider.getUI()).setRangeColorMap(colorMaps[colorMapsComboBox
+                                .getSelectedIndex()]);
+                        selectionLegendSlider.invalidate();
+                    }
+                });
 
-            selectionLegendSlider.addChangeListener(new ChangeListener() {
-                @Override
-                public void stateChanged(ChangeEvent e) {
-                    RangeSlider slider = (RangeSlider) e.getSource();
-                    SurfaceTextureDescription texDesc = settings.getSurfaceDescription(currentScreen);
+                selectionLegendSlider.addChangeListener(new ChangeListener() {
+                    @Override
+                    public void stateChanged(ChangeEvent e) {
+                        RangeSlider slider = (RangeSlider) e.getSource();
+                        SurfaceTextureDescription texDesc = settings.getSurfaceDescription(currentScreen);
 
-                    String var = texDesc.getVarName();
-                    settings.setVariableRange(currentScreen, var, slider.getValue(), slider.getUpperValue());
-                }
-            });
+                        String var = texDesc.getVarName();
+                        settings.setVariableRange(currentScreen, var, slider.getValue(), slider.getUpperValue());
+                    }
+                });
 
-            variablesComboBox.addItemListener(new ItemListener() {
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    String var = (String) ((JComboBox) e.getSource()).getSelectedItem();
+                variablesComboBox.addItemListener(new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        String var = (String) ((JComboBox) e.getSource()).getSelectedItem();
 
-                    settings.setVariable(currentScreen, var);
-                    selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
-                    selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
-                }
-            });
+                        settings.setVariable(currentScreen, var);
+                        selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
+                        selectionLegendSlider.setUpperValue(settings.getRangeSliderUpperValue(currentScreen));
+                    }
+                });
 
-            screenVcomponents.add(selectionLegendSlider);
+                screenVcomponents.add(selectionLegendSlider);
 
-            dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
+                dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
+            }
+            dataConfig.add(Box.createVerticalGlue());
         }
-        dataConfig.add(Box.createVerticalGlue());
+
         validate();
         repaint();
-    }
-
-    protected void handleFile(File file1, File file2) {
-        if (file1 != null && file2 != null && NetCDFUtil.isAcceptableFile(file1, new String[] { ".nc" })
-                && NetCDFUtil.isAcceptableFile(file2, new String[] { ".nc" })) {
-            if (timer.isInitialized()) {
-                timer.close();
-            }
-            timer = new ImauTimedPlayer(timeBar, frameCounter);
-
-            timer.init(file1);
-            new Thread(timer).start();
-
-            variables = new ArrayList<String>();
-            for (String v : timer.getVariables()) {
-                variables.add(v);
-            }
-            createDataTweakPanel();
-
-            final String path = NetCDFUtil.getPath(file1) + "screenshots/";
-
-            settings.setScreenshotPath(path);
-        } else {
-            if (null != file1 && null != file2) {
-                final JOptionPane pane = new JOptionPane();
-                pane.setMessage("Tried to open invalid file type.");
-                final JDialog dialog = pane.createDialog("Alert");
-                dialog.setVisible(true);
-            } else {
-                logger.error("File is null");
-                System.exit(1);
-            }
-        }
     }
 
     protected void handlePresetFiles() {
@@ -595,52 +565,21 @@ public class WaterCyclePanel extends NeonInterfacePanel {
             timer.close();
         }
         timer = new ImauTimedPlayer(timeBar, frameCounter);
-
         timer.init(discharge, snowCoverSWE, storUpp000005, storUpp005030, storLow030150, satDegUpp000005,
                 satDegUpp005030, satDegLow030150, precipitation2, temperature2);
-        new Thread(timer).start();
 
         variables = new ArrayList<String>();
         for (String v : timer.getVariables()) {
             variables.add(v);
         }
+        settings.initDefaultVariables(variables);
         createDataTweakPanel();
 
         final String path = NetCDFUtil.getPath(discharge) + "screenshots/";
 
         settings.setScreenshotPath(path);
-    }
 
-    private void handleFile(File file) {
-        if (file != null && NetCDFUtil.isAcceptableFile(file, new String[] { ".nc" })) {
-            if (timer.isInitialized()) {
-                timer.close();
-            }
-            timer = new ImauTimedPlayer(timeBar, frameCounter);
-
-            timer.init(file);
-            new Thread(timer).start();
-
-            variables = new ArrayList<String>();
-            for (String v : timer.getVariables()) {
-                variables.add(v);
-            }
-            createDataTweakPanel();
-
-            final String path = NetCDFUtil.getPath(file) + "screenshots/";
-
-            settings.setScreenshotPath(path);
-        } else {
-            if (null != file) {
-                final JOptionPane pane = new JOptionPane();
-                pane.setMessage("Tried to open invalid file type.");
-                final JDialog dialog = pane.createDialog("Alert");
-                dialog.setVisible(true);
-            } else {
-                logger.error("File is null");
-                System.exit(1);
-            }
-        }
+        new Thread(timer).start();
     }
 
     private void handleFiles(File[] files) {
@@ -657,19 +596,20 @@ public class WaterCyclePanel extends NeonInterfacePanel {
             }
 
             timer = new ImauTimedPlayer(timeBar, frameCounter);
-
             timer.init(files);
-            new Thread(timer).start();
 
             variables = new ArrayList<String>();
             for (String v : timer.getVariables()) {
                 variables.add(v);
             }
+            settings.initDefaultVariables(variables);
             createDataTweakPanel();
 
             final String path = NetCDFUtil.getPath(files[0]) + "screenshots/";
 
             settings.setScreenshotPath(path);
+
+            new Thread(timer).start();
 
         } else {
             if (null != files) {

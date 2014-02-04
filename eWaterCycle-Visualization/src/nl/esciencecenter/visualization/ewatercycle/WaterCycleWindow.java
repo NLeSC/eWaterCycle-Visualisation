@@ -3,7 +3,6 @@ package nl.esciencecenter.visualization.ewatercycle;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.nio.ByteBuffer;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL3;
@@ -30,7 +29,6 @@ import nl.esciencecenter.neon.shaders.ShaderProgramLoader;
 import nl.esciencecenter.neon.text.MultiColorText;
 import nl.esciencecenter.neon.text.jogampexperimental.Font;
 import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
-import nl.esciencecenter.neon.textures.ByteBufferTexture;
 import nl.esciencecenter.neon.textures.Texture2D;
 import nl.esciencecenter.visualization.ewatercycle.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
@@ -90,6 +88,9 @@ public class WaterCycleWindow implements GLEventListener {
     private final float zNear = 0.1f;
     private final float zFar = 3000.0f;
 
+    private final Texture2D[] cachedSurfaceTextures;
+    private final Texture2D[] cachedLegendTextures;
+
     // Height and width of the drawable area. We extract this from the opengl
     // instance in the reshape method every time it is changed, but set it in
     // the init method initially. The default values are defined by the settings
@@ -112,6 +113,9 @@ public class WaterCycleWindow implements GLEventListener {
         legendTextsMax = new MultiColorText[cachedScreens];
         dates = new MultiColorText[cachedScreens];
         dataSets = new MultiColorText[cachedScreens];
+
+        cachedSurfaceTextures = new Texture2D[cachedScreens];
+        cachedLegendTextures = new Texture2D[cachedScreens];
     }
 
     public static void contextOn(GLAutoDrawable drawable) {
@@ -296,6 +300,13 @@ public class WaterCycleWindow implements GLEventListener {
         // version).
         final GL3 gl = GLContext.getCurrentGL().getGL3();
 
+        // Check if the shape is still correct (if we have missed a reshape
+        // event this might not be the case).
+        if (canvasWidth != GLContext.getCurrent().getGLDrawable().getWidth()
+                || canvasHeight != GLContext.getCurrent().getGLDrawable().getHeight()) {
+            doReshape(gl);
+        }
+
         // First, we clear the buffer to start with a clean slate to draw on.
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
@@ -319,28 +330,6 @@ public class WaterCycleWindow implements GLEventListener {
 
             Float2Vector clickCoords = null;
 
-            // try {
-            // Float2Vector selection = this.inputHandler.getSelection();
-            // float x, y;
-            // if (settings.getWindowSelection() == 0) {
-            // x = selection.get(0);
-            // y = selection.get(1);
-            // } else {
-            // x = selection.get(0) / settings.getNumScreensCols();
-            // y = selection.get(1) / settings.getNumScreensRows();
-            // }
-            //
-            // clickCoords = ClickCoordinateCalculator.calc(
-            // settings.getNumScreensCols(),
-            // settings.getNumScreensRows(), canvasWidth,
-            // canvasHeight, x, y);
-            //
-            // System.out.println("X/Y: " + clickCoords);
-            //
-            // } catch (NoSelectionException e) {
-            // // No problem
-            // }
-
             int currentScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
             if (currentScreens != cachedScreens) {
                 initDatastores(gl);
@@ -349,75 +338,6 @@ public class WaterCycleWindow implements GLEventListener {
 
             displayContext(gl, timer, clickCoords);
         }
-
-        // try {
-        // if (settings.isIMAGE_STREAM_OUTPUT()) {
-        // try {
-        // finalPBO.copyToPBO(gl);
-        // ByteBuffer bb = finalPBO.getBuffer();
-        // sage.display(bb);
-        //
-        // finalPBO.unBind(gl);
-        // } catch (UninitializedException e) {
-        // e.printStackTrace();
-        // }
-        // }
-        //
-        // if (timer.isScreenshotNeeded()) {
-        // try {
-        // finalPBO.copyToPBO(gl);
-        // ByteBuffer bb = finalPBO.getBuffer();
-        // bb.rewind();
-        //
-        // int pixels = canvasWidth * canvasHeight;
-        // int[] array = new int[pixels];
-        // IntBuffer ib = IntBuffer.wrap(array);
-        //
-        // for (int i = 0; i < (pixels * 4); i += 4) {
-        // int b = bb.get(i) & 0xFF;
-        // int g = bb.get(i + 1) & 0xFF;
-        // int r = bb.get(i + 2) & 0xFF;
-        // int a = bb.get(i + 3) & 0xFF;
-        //
-        // int argb = (r << 16) | (g << 8) | b;
-        // ib.put(argb);
-        // }
-        // ib.rewind();
-        //
-        // int[] destArray = new int[pixels];
-        // IntBuffer dest = IntBuffer.wrap(destArray);
-        //
-        // int[] rowPix = new int[canvasWidth];
-        // for (int row = 0; row < canvasHeight; row++) {
-        // ib.get(rowPix);
-        // dest.position((canvasHeight - row - 1) * canvasWidth);
-        // dest.put(rowPix);
-        // }
-        //
-        // BufferedImage bufIm = new BufferedImage(canvasWidth,
-        // canvasHeight, BufferedImage.TYPE_INT_RGB);
-        // bufIm.setRGB(0, 0, canvasWidth, canvasHeight, dest.array(),
-        // 0, canvasWidth);
-        // try {
-        //
-        // ImageIO.write(bufIm, "png",
-        // new File(timer.getScreenshotFileName()));
-        // } catch (IOException e2) {
-        // // TODO Auto-generated catch block
-        // e2.printStackTrace();
-        // }
-        //
-        // finalPBO.unBind(gl);
-        // } catch (UninitializedException e) {
-        // e.printStackTrace();
-        // }
-        //
-        // timer.setScreenshotNeeded(false);
-        // }
-        // drawable.getContext().release();
-        // } catch (final GLException e) {
-        // e.printStackTrace();
-        // }
 
         reshaped = false;
 
@@ -444,10 +364,10 @@ public class WaterCycleWindow implements GLEventListener {
 
         for (int i = 0; i < cachedScreens; i++) {
             currentDesc = settings.getSurfaceDescription(i);
-            if (!currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
-                // logger.debug(currentDesc.toString());
+            if (currentDesc != null && !currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
+                logger.debug(currentDesc.toString());
 
-                timer.getTextureStorage().requestNewConfiguration(i, currentDesc);
+                timer.getEfficientTextureStorage().requestNewConfiguration(i, currentDesc);
 
                 String variableName = currentDesc.getVarName();
                 String fancyName = variableName;
@@ -470,33 +390,41 @@ public class WaterCycleWindow implements GLEventListener {
 
                 cachedTextureDescriptions[i] = currentDesc;
 
+                // Texture2D surfaceBuffer =
+                // timer.getEfficientTextureStorage().getSurfaceImage(i);
+                // Texture2D legendBuffer =
+                // timer.getEfficientTextureStorage().getLegendImage(i);
+                //
+                // if (surfaceBuffer != null) {
+                // if (cachedSurfaceTextures[i] != null) {
+                // cachedSurfaceTextures[i].delete(gl);
+                // }
+                // cachedSurfaceTextures[i] = new
+                // ByteBufferTexture(GL3.GL_TEXTURE4, surfaceBuffer,
+                // timer.getImageWidth(), timer.getImageHeight());
+                // cachedSurfaceTextures[i].init(gl);
+                // }
+                //
+                // if (legendBuffer != null) {
+                // if (cachedLegendTextures[i] != null) {
+                // cachedLegendTextures[i].delete(gl);
+                // }
+                // cachedLegendTextures[i] = new
+                // ByteBufferTexture(GL3.GL_TEXTURE5, legendBuffer, 1, 500);
+                // cachedLegendTextures[i].init(gl);
+                // }
+
+                cachedSurfaceTextures[i] = timer.getEfficientTextureStorage().getSurfaceImage(i);
+                cachedLegendTextures[i] = timer.getEfficientTextureStorage().getLegendImage(i);
+
+                cachedSurfaceTextures[i].init(gl);
+                cachedLegendTextures[i].init(gl);
             }
 
-            ByteBuffer surfaceBuffer = timer.getTextureStorage().getSurfaceImage(i);
-            ByteBuffer legendBuffer = timer.getTextureStorage().getLegendImage(i);
-
-            Texture2D surface = null;
-            if (surfaceBuffer != null) {
-                surface = new ByteBufferTexture(GL3.GL_TEXTURE4, surfaceBuffer, timer.getImageWidth(),
-                        timer.getImageHeight());
-                surface.init(gl);
+            if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
+                drawSingleWindow(gl, mv, i, cachedLegendTextures[i], cachedSurfaceTextures[i],
+                        cachedFrameBufferObjects[i], clickCoords);
             }
-
-            Texture2D legend = null;
-            if (legendBuffer != null) {
-                legend = new ByteBufferTexture(GL3.GL_TEXTURE5, legendBuffer, 1, 500);
-                legend.init(gl);
-            }
-
-            drawSingleWindow(gl, mv, i, legend, surface, cachedFrameBufferObjects[i], clickCoords);
-
-            if (surface != null) {
-                surface.delete(gl);
-            }
-            if (legend != null) {
-                legend.delete(gl);
-            }
-
         }
 
         // logger.debug("Tiling windows");
@@ -566,6 +494,7 @@ public class WaterCycleWindow implements GLEventListener {
             gl.glClear(GL.GL_DEPTH_BUFFER_BIT | GL.GL_COLOR_BUFFER_BIT);
 
             // Draw legend texture
+            legendTexture.use(gl);
             shaderProgram_Legend.setUniform("texture_map", legendTexture.getMultitexNumber());
             shaderProgram_Legend.setUniformMatrix("MVMatrix", new Float4Matrix());
             shaderProgram_Legend.setUniformMatrix("PMatrix", new Float4Matrix());
@@ -589,6 +518,8 @@ public class WaterCycleWindow implements GLEventListener {
 
             shaderProgram_Sphere.setUniformMatrix("MVMatrix", new Float4Matrix(mv));
             shaderProgram_Sphere.setUniformMatrix("PMatrix", p);
+
+            surfaceTexture.use(gl);
 
             shaderProgram_Sphere.setUniform("texture_map", surfaceTexture.getMultitexNumber());
 
@@ -652,7 +583,6 @@ public class WaterCycleWindow implements GLEventListener {
     }
 
     private void blur(GL3 gl, FrameBufferObject target, Quad fullScreenQuad, int passes, int blurType, float blurSize) {
-
         shaderProgram_GaussianBlur.setUniform("Texture", target.getTexture().getMultitexNumber());
 
         shaderProgram_GaussianBlur.setUniformMatrix("PMatrix", new Float4Matrix());
@@ -768,7 +698,7 @@ public class WaterCycleWindow implements GLEventListener {
             }
             cachedFrameBufferObjects[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
 
-            logger.debug("Cahced FrameBufferObject init nr: " + i);
+            logger.debug("Cached FrameBufferObject init nr: " + i);
             cachedFrameBufferObjects[i].init(gl);
 
             // String text = "garbled!";
@@ -828,6 +758,12 @@ public class WaterCycleWindow implements GLEventListener {
         // version).
         final GL3 gl = GLContext.getCurrentGL().getGL3();
 
+        doReshape(gl);
+
+        contextOff(drawable);
+    }
+
+    private void doReshape(GL3 gl) {
         // set the new canvas size and aspect ratio in the global variables.
         canvasWidth = GLContext.getCurrent().getGLDrawable().getWidth();
         canvasHeight = GLContext.getCurrent().getGLDrawable().getHeight();
@@ -838,8 +774,6 @@ public class WaterCycleWindow implements GLEventListener {
         initDatastores(gl);
 
         reshaped = true;
-
-        contextOff(drawable);
     }
 
     @Override

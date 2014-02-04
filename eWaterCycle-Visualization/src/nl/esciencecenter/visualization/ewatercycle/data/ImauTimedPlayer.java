@@ -39,7 +39,8 @@ public class ImauTimedPlayer implements Runnable {
     private final InputHandler inputHandler;
 
     private ImauDatasetManager dsManager;
-    private TextureStorage texStorage;
+    // private TextureStorage texStorage;
+    private EfficientTextureStorage effTexStorage;
 
     private boolean needsScreenshot = false;
     private String screenshotFilename = "";
@@ -90,8 +91,8 @@ public class ImauTimedPlayer implements Runnable {
         for (int i = 1; i < fixedPoints.size(); i++) {
             Float3Vector newPoint = fixedPoints.get(i);
 
-            Float3Vector[] bezierPointsTemp = FloatVectorMath.degreesBezierCurve(bezierSteps.get(i - 1), lastPoint, still, still,
-                    newPoint);
+            Float3Vector[] bezierPointsTemp = FloatVectorMath.degreesBezierCurve(bezierSteps.get(i - 1), lastPoint,
+                    still, still, newPoint);
 
             for (int j = 1; j < bezierPointsTemp.length; j++) {
                 bezierPoints.add(bezierPointsTemp[j]);
@@ -111,7 +112,8 @@ public class ImauTimedPlayer implements Runnable {
 
     public void init(File[] files) {
         this.dsManager = new ImauDatasetManager(files);
-        this.texStorage = dsManager.getTextureStorage();
+        // this.texStorage = dsManager.getTextureStorage();
+        this.effTexStorage = dsManager.getEfficientTextureStorage();
 
         frameNumber = dsManager.getFrameNumberOfIndex(0);
         final int initialMaxBar = dsManager.getNumFrames() - 1;
@@ -119,24 +121,7 @@ public class ImauTimedPlayer implements Runnable {
         timeBar.setMaximum(initialMaxBar);
         timeBar.setMinimum(0);
 
-        updateFrame(frameNumber, true);
-
-        initialized = true;
-    }
-
-    public void init(File fileDS1) {
-        this.fileDS1 = fileDS1;
-        this.fileDS2 = null;
-        this.dsManager = new ImauDatasetManager(fileDS1);
-        this.texStorage = dsManager.getTextureStorage();
-
-        frameNumber = dsManager.getFrameNumberOfIndex(0);
-        final int initialMaxBar = dsManager.getNumFrames() - 1;
-
-        timeBar.setMaximum(initialMaxBar);
-        timeBar.setMinimum(0);
-
-        updateFrame(frameNumber, true);
+        // updateFrame(frameNumber, true);
 
         initialized = true;
     }
@@ -156,7 +141,7 @@ public class ImauTimedPlayer implements Runnable {
 
         this.dsManager = new ImauDatasetManager(discharge, snowCoverSWE, storUpp000005, storUpp005030, storLow030150,
                 satDegUpp000005, satDegUpp005030, satDegLow030150, precipitation, temperature);
-        this.texStorage = dsManager.getTextureStorage();
+        // this.texStorage = dsManager.getTextureStorage();
 
         frameNumber = dsManager.getFrameNumberOfIndex(0);
         final int initialMaxBar = dsManager.getNumFrames() - 1;
@@ -164,7 +149,7 @@ public class ImauTimedPlayer implements Runnable {
         timeBar.setMaximum(initialMaxBar);
         timeBar.setMinimum(0);
 
-        updateFrame(frameNumber, true);
+        // updateFrame(frameNumber, true);
 
         initialized = true;
 
@@ -172,7 +157,8 @@ public class ImauTimedPlayer implements Runnable {
 
     public void reinitializeDatastores() {
         this.dsManager = new ImauDatasetManager(fileDS1);
-        this.texStorage = dsManager.getTextureStorage();
+        // this.texStorage = dsManager.getTextureStorage();
+        this.effTexStorage = dsManager.getEfficientTextureStorage();
 
         updateFrame(frameNumber, true);
     }
@@ -281,8 +267,8 @@ public class ImauTimedPlayer implements Runnable {
                                 // + settings
                                 // .getMovieRotationSpeedDef());
                                 // inputHandler.setRotation(rotation);
-                                inputHandler.setRotation(new Float3Vector(bezierPoints.get(frameNumber).getX(), bezierPoints
-                                        .get(frameNumber).getY(), 0f));
+                                inputHandler.setRotation(new Float3Vector(bezierPoints.get(frameNumber).getX(),
+                                        bezierPoints.get(frameNumber).getY(), 0f));
                                 inputHandler.setViewDist(bezierPoints.get(frameNumber).getZ());
                                 setScreenshotNeeded(true);
                             } else {
@@ -295,7 +281,10 @@ public class ImauTimedPlayer implements Runnable {
                             int newFrameNumber;
                             try {
                                 newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
-                                if (texStorage.doneWithLastRequest()) {
+                                // if (texStorage.doneWithLastRequest()) {
+                                // updateFrame(newFrameNumber, false);
+                                // }
+                                if (effTexStorage.doneWithLastRequest()) {
                                     updateFrame(newFrameNumber, false);
                                 }
                             } catch (IOException e) {
@@ -362,8 +351,12 @@ public class ImauTimedPlayer implements Runnable {
         }
     }
 
-    public TextureStorage getTextureStorage() {
-        return texStorage;
+    // public TextureStorage getTextureStorage() {
+    // return texStorage;
+    // }
+
+    public EfficientTextureStorage getEfficientTextureStorage() {
+        return effTexStorage;
     }
 
     public ArrayList<String> getVariables() {
@@ -372,6 +365,14 @@ public class ImauTimedPlayer implements Runnable {
 
     public String getVariableUnits(String varName) {
         return dsManager.getVariableUnits(varName);
+    }
+
+    public float getMinValueContainedInDataset(String varName) {
+        return dsManager.getMinValueContainedInDataset(varName);
+    }
+
+    public float getMaxValueContainedInDataset(String varName) {
+        return dsManager.getMaxValueContainedInDataset(varName);
     }
 
     public int getImageWidth() {

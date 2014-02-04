@@ -1,7 +1,9 @@
 package nl.esciencecenter.visualization.ewatercycle;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
+import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.util.TypedProperties;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
 
@@ -127,6 +129,17 @@ public class WaterCycleSettings {
         currentDiffMinValues = new HashMap<String, Float>();
         currentDiffMaxValues = new HashMap<String, Float>();
         currentColormap = new HashMap<String, String>();
+
+        // Set the default (no input yet) state
+        // minValues.put("", 0f);
+        // maxValues.put("", 0f);
+        // currentMinValues.put("", 0f);
+        // currentMaxValues.put("", 0f);
+        // diffMinValues.put("", 0f);
+        // diffMaxValues.put("", 0f);
+        // currentDiffMinValues.put("", 0f);
+        // currentDiffMaxValues.put("", 0f);
+        // currentColormap.put("", "");
 
         try {
             final TypedProperties props = new TypedProperties();
@@ -431,86 +444,28 @@ public class WaterCycleSettings {
     private void initializeScreenDescriptions() {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
 
-        for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
-            // if (i == 0) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "TEMP",
-            // "realistic",
-            // false, false, false, currentMinValues.get("TEMP"),
-            // currentMaxValues.get("TEMP"));
-            // } else if (i == 1) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "KE",
-            // "hotres",
-            // false, false, false, currentMinValues.get("KE"),
-            // currentMaxValues.get("KE"));
-            // } else if (i == 2) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "SALT",
-            // "inv_diff",
-            // false, false, false, currentMinValues.get("SALT"),
-            // currentMaxValues.get("SALT"));
-            // } else if (i == 3) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "SSH",
-            // "default",
-            // false, false, false, currentMinValues.get("SSH"),
-            // currentMaxValues.get("SSH"));
-            // } else {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "TEMP",
-            // "realistic",
-            // false, false, false, currentMinValues.get("TEMP"),
-            // currentMaxValues.get("TEMP"));
-            // }
-
-            // Set the default variables on screen
-            String var = "";
-            if (i == 0) {
-                var = "discharge";
-            } else if (i == 1) {
-                var = "snowCoverSWE";
-            } else if (i == 2) {
-                var = "satDegUpp000005";
-            } else if (i == 3) {
-                var = "satDegLow030150";
-            } else {
-                var = "snowCoverSWE";
-            }
-            screenDescriptions[i] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
-                    currentColormap.get(var), false, false, false, currentMinValues.get(var), currentMaxValues.get(var));
-
-            logger.debug(screenDescriptions[i].toString());
-
-            // if (i == 0) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "runoff",
-            // "realistic", false, false, false, currentMinValues.get("runoff"),
-            // currentMaxValues.get("runoff"));
-            // } else if (i == 1) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "runoff",
-            // "hotres",
-            // false, false, false, currentMinValues.get("runoff"),
-            // currentMaxValues.get("runoff"));
-            // } else if (i == 2) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "runoff",
-            // "inv_diff", false, false, false, currentMinValues.get("runoff"),
-            // currentMaxValues.get("runoff"));
-            // } else if (i == 3) {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "runoff",
-            // "default",
-            // false, false, false, currentMinValues.get("runoff"),
-            // currentMaxValues.get("runoff"));
-            // } else {
-            // screenDescriptions[i] = new
-            // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, "runoff",
-            // "realistic", false, false, false, currentMinValues.get("runoff"),
-            // currentMaxValues.get("runoff"));
-            // }
-        }
+        // for (int i = 0; i < number_of_screens_col * number_of_screens_row;
+        // i++) {
+        // Set the default variables on screen
+        // String var = "";
+        // if (i == 0) {
+        // var = "discharge";
+        // } else if (i == 1) {
+        // var = "snowCoverSWE";
+        // } else if (i == 2) {
+        // var = "satDegUpp000005";
+        // } else if (i == 3) {
+        // var = "satDegLow030150";
+        // } else {
+        // var = "snowCoverSWE";
+        // }
+        // screenDescriptions[i] = new
+        // SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
+        // currentColormap.get(var), false, false, false,
+        // currentMinValues.get(var), currentMaxValues.get(var));
+        //
+        // logger.debug(screenDescriptions[i].toString());
+        // }
     }
 
     public void setWaittimeBeforeRetry(long value) {
@@ -571,38 +526,6 @@ public class WaterCycleSettings {
 
     public void setPreprocessAmount(int value) {
         PREPROCESSING_AMOUNT = value;
-    }
-
-    public float getVarMax(String var) {
-        return maxValues.get(var);
-    }
-
-    public float getVarDiffMax(String var) {
-        return diffMaxValues.get(var);
-    }
-
-    public float getVarMin(String var) {
-        return minValues.get(var);
-    }
-
-    public float getVarDiffMin(String var) {
-        return diffMinValues.get(var);
-    }
-
-    public float getCurrentVarMax(String var) {
-        return currentMaxValues.get(var);
-    }
-
-    public float getCurrentVarDiffMax(String var) {
-        return currentDiffMaxValues.get(var);
-    }
-
-    public float getCurrentVarMin(String var) {
-        return currentMinValues.get(var);
-    }
-
-    public float getCurrentVarDiffMin(String var) {
-        return currentDiffMinValues.get(var);
     }
 
     public int getDepthMin() {
@@ -688,7 +611,7 @@ public class WaterCycleSettings {
     public synchronized void setVariable(int screenNumber, String variable) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
         SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
-                variable, currentColormap.get(variable), state.isDynamicDimensions(), state.isDiff(),
+                variable, getCurrentColormap(variable), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), state.getLowerBound(), state.getUpperBound());
         screenDescriptions[screenNumber] = result;
     }
@@ -899,13 +822,12 @@ public class WaterCycleSettings {
     }
 
     public void setVariableRange(int screenNumber, String varName, int sliderLowerValue, int sliderUpperValue) {
+        float diff = getVarMax(varName) - getVarMin(varName);
 
-        float diff = (maxValues.get(varName) - minValues.get(varName));
-
-        currentMinValues.put(varName, (sliderLowerValue / 100f) * diff + minValues.get(varName));
-        currentMaxValues.put(varName, (sliderUpperValue / 100f) * diff + minValues.get(varName));
-        float minFloatValue = currentMinValues.get(varName);
-        float maxFloatValue = currentMaxValues.get(varName);
+        currentMinValues.put(varName, (sliderLowerValue / 100f) * diff + getVarMin(varName));
+        currentMaxValues.put(varName, (sliderUpperValue / 100f) * diff + getVarMin(varName));
+        float minFloatValue = getCurrentVarMin(varName);
+        float maxFloatValue = getCurrentVarMax(varName);
 
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
         SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
@@ -969,5 +891,112 @@ public class WaterCycleSettings {
 
     public int getInterfaceHeight() {
         return INTERFACE_HEIGHT;
+    }
+
+    public void initDefaultVariables(ArrayList<String> variables) {
+        screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
+
+        if (variables.size() != 0) {
+            for (int j = 0; j < number_of_screens_col * number_of_screens_row; j++) {
+                String var;
+                if (j < variables.size()) {
+                    var = variables.get(j);
+                } else {
+                    var = variables.get(0);
+                }
+                screenDescriptions[j] = new SurfaceTextureDescription(INITIAL_SIMULATION_FRAME, 0, var,
+                        getCurrentColormap(var), false, false, false, getCurrentVarMin(var), getCurrentVarMax(var));
+
+                logger.debug(screenDescriptions[j].toString());
+            }
+        }
+    }
+
+    public String getCurrentColormap(String key) {
+        String colormap;
+        if (currentColormap.containsKey(key)) {
+            colormap = currentColormap.get(key);
+        } else {
+            colormap = ColormapInterpreter.getColormapNames()[0];
+        }
+
+        return colormap;
+    }
+
+    public float getVarMin(String key) {
+        float value;
+        if (minValues.containsKey(key)) {
+            value = minValues.get(key);
+        } else {
+            value = Float.NaN;
+        }
+
+        return value;
+    }
+
+    public float getVarMax(String key) {
+        float value;
+        if (maxValues.containsKey(key)) {
+            value = maxValues.get(key);
+        } else {
+            value = Float.NaN;
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarDiffMin(String key) {
+        float value;
+        if (currentDiffMinValues.containsKey(key)) {
+            value = currentDiffMinValues.get(key);
+        } else {
+            value = minValues.get(key);
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarDiffMax(String key) {
+        float value;
+        if (currentDiffMaxValues.containsKey(key)) {
+            value = currentDiffMaxValues.get(key);
+        } else {
+            value = maxValues.get(key);
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarMin(String key) {
+        float value;
+        if (currentMinValues.containsKey(key)) {
+            value = currentMinValues.get(key);
+        } else {
+            value = minValues.get(key);
+        }
+
+        return value;
+    }
+
+    public float getCurrentVarMax(String key) {
+        float value;
+        if (currentMaxValues.containsKey(key)) {
+            value = currentMaxValues.get(key);
+        } else {
+            value = maxValues.get(key);
+        }
+
+        return value;
+    }
+
+    public void setVarMin(String key, float currentMin) {
+        minValues.put(key, currentMin);
+        currentMinValues.put(key, currentMin);
+    }
+
+    public void setVarMax(String key, float currentMax) {
+        maxValues.put(key, currentMax);
+        currentMaxValues.put(key, currentMax);
+
     }
 }
