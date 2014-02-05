@@ -3,6 +3,7 @@ package nl.esciencecenter.visualization.ewatercycle;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.List;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL3;
@@ -367,7 +368,12 @@ public class WaterCycleWindow implements GLEventListener {
             if (currentDesc != null && !currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
                 logger.debug(currentDesc.toString());
 
-                timer.getEfficientTextureStorage().requestNewConfiguration(i, currentDesc);
+                List<Texture2D> oldTextures = timer.getEfficientTextureStorage()
+                        .requestNewConfiguration(i, currentDesc);
+                // Remove all of the (now unused) textures
+                for (Texture2D tex : oldTextures) {
+                    tex.delete(gl);
+                }
 
                 String variableName = currentDesc.getVarName();
                 String fancyName = variableName;
