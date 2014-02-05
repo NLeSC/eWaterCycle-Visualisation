@@ -674,7 +674,7 @@ public class WaterCycleSettings {
     }
 
     public String getFancyDate(int frameNumber) {
-        String result = "Day: " + frameNumber;
+        String result = "Time: " + frameNumber;
 
         return result;
     }

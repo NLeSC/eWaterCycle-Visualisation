@@ -119,7 +119,6 @@ public class EfficientTextureStorage {
 
         SurfaceTextureDescription oldDesc = newScreenA[screenNumber];
         oldScreenA[screenNumber] = oldDesc;
-
         newScreenA[screenNumber] = newDesc;
 
         // Do some checking to see if the buffers are in sync
@@ -132,8 +131,7 @@ public class EfficientTextureStorage {
             oldTextures.add(legend);
         }
 
-        // Check if there are textures in the storage that are unused, and
-        // remove them if so
+        // Copy links to all of the actually used textures into a new list.
         ArrayList<SurfaceTextureDescription> usedDescs = new ArrayList<SurfaceTextureDescription>();
         for (int i = 0; i < oldScreenA.length; i++) {
             usedDescs.add(oldScreenA[i]);
@@ -146,7 +144,6 @@ public class EfficientTextureStorage {
                 newSurfaceStore.put(storedSurfaceDesc, surfaceStorage.get(storedSurfaceDesc));
             }
         }
-        surfaceStorage = newSurfaceStore;
 
         HashMap<SurfaceTextureDescription, Texture2D> newLegendStore = new HashMap<SurfaceTextureDescription, Texture2D>();
         for (Map.Entry<SurfaceTextureDescription, Texture2D> entry : legendStorage.entrySet()) {
@@ -156,9 +153,8 @@ public class EfficientTextureStorage {
                 newLegendStore.put(key, value);
             }
         }
-        legendStorage = newLegendStore;
 
-        // Now, add all of the unused ones to the to-be-removed list
+        // Add all of the unused ones to the to-be-removed list
         for (SurfaceTextureDescription key : surfaceStorage.keySet()) {
             Texture2D value = surfaceStorage.get(key);
             if (!newSurfaceStore.containsKey(key)) {
@@ -172,10 +168,17 @@ public class EfficientTextureStorage {
             }
         }
 
+        // And overwrite the lists
+        surfaceStorage = newSurfaceStore;
+        legendStorage = newLegendStore;
+
         if (!surfaceStorage.containsValue(newDesc) && !legendStorage.containsValue(newDesc)) {
             logger.debug("requesting: " + newDesc.getVarName());
             manager.buildImages(newDesc);
         }
+
+        logger.debug("tex storage now holds : " + (surfaceStorage.size() + legendStorage.size()) + " textures, "
+                + oldTextures.size() + " will be deleted.");
 
         return oldTextures;
     }
@@ -191,6 +194,9 @@ public class EfficientTextureStorage {
         }
 
         if (!failure) {
+            if (surfaceStorage.containsKey(desc)) {
+                logger.debug("overwriting surface.");
+            }
             surfaceStorage.put(desc, new ByteBufferTexture(surfaceMultiTexUnit, data, width, height));
         }
     }
@@ -205,6 +211,9 @@ public class EfficientTextureStorage {
         }
 
         if (!failure) {
+            if (legendStorage.containsKey(desc)) {
+                logger.debug("overwriting legend.");
+            }
             legendStorage.put(desc, new ByteBufferTexture(legendMultiTexUnit, data, LEGEND_TEXTURE_WIDTH,
                     LEGEND_TEXTURE_HEIGHT));
         }
