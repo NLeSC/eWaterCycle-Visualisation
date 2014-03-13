@@ -21,7 +21,7 @@
 	<classpathentry kind="lib" path="lib/jogl/jogl-all.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.5.6.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.5.6.jar"/>
-	<classpathentry kind="lib" path="lib/netcdf/netcdf-4.2.jar"/>
 	<classpathentry kind="lib" path="lib/Neon.jar"/>
+	<classpathentry kind="lib" path="lib/netcdf/netcdfAll-4.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

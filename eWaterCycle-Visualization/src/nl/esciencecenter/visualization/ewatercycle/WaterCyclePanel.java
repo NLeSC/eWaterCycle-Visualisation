@@ -20,6 +20,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -41,9 +42,9 @@ import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.neon.swing.GoggleSwing;
 import nl.esciencecenter.neon.swing.RangeSlider;
 import nl.esciencecenter.neon.swing.RangeSliderUI;
-import nl.esciencecenter.visualization.ewatercycle.data.ImauTimedPlayer;
-import nl.esciencecenter.visualization.ewatercycle.data.NetCDFUtil;
+import nl.esciencecenter.neon.swing.SimpleImageIcon;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
+import nl.esciencecenter.visualization.ewatercycle.data.TimedPlayer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,19 +68,16 @@ public class WaterCyclePanel extends NeonInterfacePanel {
 
     private final JPanel dataConfig, movieConfig;
 
-    private static ImauTimedPlayer timer;
+    private static TimedPlayer timer;
 
     private ArrayList<String> variables;
 
     protected GLCanvas glCanvas;
 
-    private String cmdLnPath = "";
+    private CacheFileManager cache;
 
-    public WaterCyclePanel(String path) {
-        cmdLnPath = path;
+    public WaterCyclePanel() {
         setLayout(new BorderLayout(0, 0));
-
-        // this.imauWindow = imauWindow;
 
         variables = new ArrayList<String>();
 
@@ -92,7 +90,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         timeBar.setPaintTicks(true);
         timeBar.setSnapToTicks(true);
 
-        timer = new ImauTimedPlayer(timeBar, frameCounter);
+        timer = new TimedPlayer(timeBar, frameCounter);
 
         // Make the menu bar
         final JMenuBar menuBar = new JMenuBar();
@@ -427,7 +425,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
                 screenSelection[i + 1] = "Screen Number " + i;
             }
 
-            final JComboBox comboBox = new JComboBox(screenSelection);
+            final JComboBox<String> comboBox = new JComboBox<String>(screenSelection);
             comboBox.addItemListener(new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
@@ -458,11 +456,11 @@ public class WaterCyclePanel extends NeonInterfacePanel {
 
                 final ArrayList<Component> screenHcomponents = new ArrayList<Component>();
 
-                JComboBox dataModeComboBox = new JComboBox(dataModes);
+                JComboBox<String> dataModeComboBox = new JComboBox<String>(dataModes);
                 ActionListener al = new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        JComboBox cb = (JComboBox) e.getSource();
+                        JComboBox<String> cb = (JComboBox<String>) e.getSource();
                         int selection = cb.getSelectedIndex();
 
                         if (selection == 1) {
@@ -480,15 +478,28 @@ public class WaterCyclePanel extends NeonInterfacePanel {
                 dataModeComboBox.setMaximumSize(new Dimension(100, 25));
                 screenHcomponents.add(dataModeComboBox);
 
-                final JComboBox variablesComboBox = new JComboBox(variables.toArray(new String[0]));
+                final JComboBox<String> variablesComboBox = new JComboBox<String>(variables.toArray(new String[0]));
                 variablesComboBox.setSelectedItem(selectionDescription.getVarName());
                 variablesComboBox.setMinimumSize(new Dimension(50, 25));
                 variablesComboBox.setMaximumSize(new Dimension(240, 25));
                 screenHcomponents.add(variablesComboBox);
 
+                final JCheckBox logCheckBox = new JCheckBox("log?", false);
+                ItemListener logCheckboxListener = new ItemListener() {
+                    @Override
+                    public void itemStateChanged(ItemEvent e) {
+                        JCheckBox cb = (JCheckBox) e.getSource();
+                        settings.setLogScale(currentScreen, cb.isSelected());
+
+                    }
+                };
+                logCheckBox.addItemListener(logCheckboxListener);
+                screenHcomponents.add(logCheckBox);
+
                 screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
 
-                final JComboBox colorMapsComboBox = ColormapInterpreter.getLegendJComboBox(new Dimension(240, 25));
+                final JComboBox<SimpleImageIcon> colorMapsComboBox = ColormapInterpreter
+                        .getLegendJComboBox(new Dimension(240, 25));
                 colorMapsComboBox.setSelectedItem(ColormapInterpreter.getIndexOfColormap(selectionDescription
                         .getColorMap()));
                 colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
@@ -527,7 +538,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
                 variablesComboBox.addItemListener(new ItemListener() {
                     @Override
                     public void itemStateChanged(ItemEvent e) {
-                        String var = (String) ((JComboBox) e.getSource()).getSelectedItem();
+                        String var = (String) e.getItem();
 
                         settings.setVariable(currentScreen, var);
                         selectionLegendSlider.setValue(settings.getRangeSliderLowerValue(currentScreen));
@@ -546,46 +557,10 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         repaint();
     }
 
-    protected void handlePresetFiles() {
-        File discharge = new File(cmdLnPath + "discharge_daily2000.nc");
-        File snowCoverSWE = new File(cmdLnPath + "snowCoverSWE_daily2000.nc");
-
-        File storUpp000005 = new File(cmdLnPath + "storUpp000005_daily2000.nc");
-        File storUpp005030 = new File(cmdLnPath + "storUpp005030_daily2000.nc");
-        File storLow030150 = new File(cmdLnPath + "storLow030150_daily2000.nc");
-
-        File satDegUpp000005 = new File(cmdLnPath + "satDegUpp000005_daily2000.nc");
-        File satDegUpp005030 = new File(cmdLnPath + "satDegUpp005030_daily2000.nc");
-        File satDegLow030150 = new File(cmdLnPath + "satDegLow030150_daily2000.nc");
-
-        File precipitation2 = new File(cmdLnPath + "precipitation2000.nc");
-        File temperature2 = new File(cmdLnPath + "temperature2000.nc");
-
-        if (timer.isInitialized()) {
-            timer.close();
-        }
-        timer = new ImauTimedPlayer(timeBar, frameCounter);
-        timer.init(discharge, snowCoverSWE, storUpp000005, storUpp005030, storLow030150, satDegUpp000005,
-                satDegUpp005030, satDegLow030150, precipitation2, temperature2);
-
-        variables = new ArrayList<String>();
-        for (String v : timer.getVariables()) {
-            variables.add(v);
-        }
-        settings.initDefaultVariables(variables);
-        createDataTweakPanel();
-
-        final String path = NetCDFUtil.getPath(discharge) + "screenshots/";
-
-        settings.setScreenshotPath(path);
-
-        new Thread(timer).start();
-    }
-
     private void handleFiles(File[] files) {
         boolean accept = true;
         for (File thisFile : files) {
-            if (!NetCDFUtil.isAcceptableFile(thisFile, new String[] { ".nc" })) {
+            if (!isAcceptableFile(thisFile, new String[] { ".nc" })) {
                 accept = false;
             }
         }
@@ -595,38 +570,34 @@ public class WaterCyclePanel extends NeonInterfacePanel {
                 timer.close();
             }
 
-            timer = new ImauTimedPlayer(timeBar, frameCounter);
+            timer = new TimedPlayer(timeBar, frameCounter);
             timer.init(files);
 
             variables = new ArrayList<String>();
             for (String v : timer.getVariables()) {
                 variables.add(v);
             }
+            cache = new CacheFileManager(files[0].getParent());
+            settings.setCacheFileManager(cache);
             settings.initDefaultVariables(variables);
+
             createDataTweakPanel();
 
-            final String path = NetCDFUtil.getPath(files[0]) + "screenshots/";
+            final String path = files[0].getParent() + "screenshots/";
 
             settings.setScreenshotPath(path);
 
             new Thread(timer).start();
-
         } else {
-            if (null != files) {
-                final JOptionPane pane = new JOptionPane();
-                pane.setMessage("Tried to open invalid file type.");
-                final JDialog dialog = pane.createDialog("Alert");
-                dialog.setVisible(true);
-            } else {
-                logger.error("File is null");
-                System.exit(1);
-            }
+            final JOptionPane pane = new JOptionPane();
+            pane.setMessage("Tried to open invalid file type.");
+            final JDialog dialog = pane.createDialog("Alert");
+            dialog.setVisible(true);
         }
-
     }
 
     private File[] openFile() {
-        final JFileChooser fileChooser = new JFileChooser();
+        final JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
@@ -646,8 +617,6 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         configPanel.remove(dataConfig);
         validate();
         repaint();
-        // configPanel.remove(visualConfig);
-        // configPanel.remove(movieConfig);
 
         currentConfigState = newState;
 
@@ -655,16 +624,36 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         } else if (currentConfigState == TweakState.DATA) {
             configPanel.setVisible(true);
             configPanel.add(dataConfig, BorderLayout.WEST);
-            // } else if (currentConfigState == TweakState.VISUAL) {
-            // configPanel.setVisible(true);
-            // configPanel.add(visualConfig, BorderLayout.WEST);
-            // } else if (currentConfigState == TweakState.MOVIE) {
-            // configPanel.setVisible(true);
-            // configPanel.add(movieConfig, BorderLayout.WEST);
         }
     }
 
-    public static ImauTimedPlayer getTimer() {
+    public static TimedPlayer getTimer() {
         return timer;
+    }
+
+    /**
+     * Check whether the file's extension is acceptable.
+     * 
+     * @param file
+     *            The file to check.
+     * @param accExts
+     *            The list of acceptable extensions.
+     * @return True if the file's extension is present in the list of acceptable
+     *         extensions.
+     */
+    public static boolean isAcceptableFile(File file, String[] accExts) {
+        final String path = file.getParent();
+        final String name = file.getName();
+        final String fullPath = path + name;
+        final String[] ext = fullPath.split("[.]");
+
+        boolean result = false;
+        for (int i = 0; i < accExts.length; i++) {
+            if (ext[ext.length - 1].compareTo(accExts[i]) != 0) {
+                result = true;
+            }
+        }
+
+        return result;
     }
 }

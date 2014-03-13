@@ -31,8 +31,8 @@ import nl.esciencecenter.neon.text.MultiColorText;
 import nl.esciencecenter.neon.text.jogampexperimental.Font;
 import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
 import nl.esciencecenter.neon.textures.Texture2D;
-import nl.esciencecenter.visualization.ewatercycle.data.ImauTimedPlayer;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
+import nl.esciencecenter.visualization.ewatercycle.data.TimedPlayer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class WaterCycleWindow implements GLEventListener {
 
     private int cachedScreens = 9;
 
-    private ImauTimedPlayer timer;
+    private TimedPlayer timer;
     private float aspect;
 
     protected int fontSet = FontFactory.UBUNTU;
@@ -325,27 +325,27 @@ public class WaterCycleWindow implements GLEventListener {
         modelViewMatrix = modelViewMatrix.mul(FloatMatrixMath.rotationY(inputHandler.getRotation().getY()));
         modelViewMatrix = modelViewMatrix.mul(FloatMatrixMath.rotationZ(inputHandler.getRotation().getZ()));
 
-        ImauTimedPlayer timer = WaterCyclePanel.getTimer();
+        TimedPlayer timer = WaterCyclePanel.getTimer();
         if (timer.isInitialized()) {
             this.timer = timer;
 
             Float2Vector clickCoords = null;
-
-            int currentScreens = settings.getNumScreensRows() * settings.getNumScreensCols();
-            if (currentScreens != cachedScreens) {
-                initDatastores(gl);
-                timer.reinitializeDatastores();
-            }
 
             displayContext(gl, timer, clickCoords);
         }
 
         reshaped = false;
 
+        if (timer.isScreenshotNeeded()) {
+            finalPBO.makeScreenshotPNG(gl, timer.getScreenshotFileName());
+
+            timer.setScreenshotNeeded(false);
+        }
+
         contextOff(drawable);
     }
 
-    private void displayContext(GL3 gl, ImauTimedPlayer timer, Float2Vector clickCoords) {
+    private void displayContext(GL3 gl, TimedPlayer timer, Float2Vector clickCoords) {
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
         final Point4 eye = new Point4((float) (radius * Math.sin(ftheta) * Math.cos(phi)), (float) (radius
@@ -395,30 +395,6 @@ public class WaterCycleWindow implements GLEventListener {
                 legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
 
                 cachedTextureDescriptions[i] = currentDesc;
-
-                // Texture2D surfaceBuffer =
-                // timer.getEfficientTextureStorage().getSurfaceImage(i);
-                // Texture2D legendBuffer =
-                // timer.getEfficientTextureStorage().getLegendImage(i);
-                //
-                // if (surfaceBuffer != null) {
-                // if (cachedSurfaceTextures[i] != null) {
-                // cachedSurfaceTextures[i].delete(gl);
-                // }
-                // cachedSurfaceTextures[i] = new
-                // ByteBufferTexture(GL3.GL_TEXTURE4, surfaceBuffer,
-                // timer.getImageWidth(), timer.getImageHeight());
-                // cachedSurfaceTextures[i].init(gl);
-                // }
-                //
-                // if (legendBuffer != null) {
-                // if (cachedLegendTextures[i] != null) {
-                // cachedLegendTextures[i].delete(gl);
-                // }
-                // cachedLegendTextures[i] = new
-                // ByteBufferTexture(GL3.GL_TEXTURE5, legendBuffer, 1, 500);
-                // cachedLegendTextures[i].init(gl);
-                // }
 
                 cachedSurfaceTextures[i] = timer.getEfficientTextureStorage().getSurfaceImage(i);
                 cachedLegendTextures[i] = timer.getEfficientTextureStorage().getLegendImage(i);
@@ -779,6 +755,10 @@ public class WaterCycleWindow implements GLEventListener {
 
         initDatastores(gl);
 
+        finalPBO.delete(gl);
+        finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
+        finalPBO.init(gl);
+
         reshaped = true;
     }
 
@@ -827,6 +807,8 @@ public class WaterCycleWindow implements GLEventListener {
         for (int i = 0; i < cachedScreens; i++) {
             cachedFrameBufferObjects[i].delete(gl);
         }
+
+        finalPBO.delete(gl);
 
         contextOff(drawable);
     }

@@ -1,12 +1,7 @@
 package nl.esciencecenter.visualization.ewatercycle.data;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +11,7 @@ import java.util.Map.Entry;
 import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
+import nl.esciencecenter.visualization.ewatercycle.CacheFileManager;
 import nl.esciencecenter.visualization.ewatercycle.WaterCycleSettings;
 
 import org.slf4j.Logger;
@@ -44,11 +40,11 @@ public class NetCDFReader {
     private final HashMap<String, Float> mins;
     private final HashMap<String, Float> maxes;
 
-    private final String path;
+    private final CacheFileManager cache;
 
     public NetCDFReader(File file) {
         this.ncfile = open(file);
-        path = file.getParent();
+        cache = new CacheFileManager(file.getParent());
 
         variables = new HashMap<String, Variable>();
         units = new HashMap<String, String>();
@@ -67,7 +63,7 @@ public class NetCDFReader {
 
             boolean variableIsActuallyADimension = false;
             for (Dimension d : dims) {
-                if (d.getName().compareTo(name) == 0) {
+                if (d.getFullName().compareTo(name) == 0) {
                     variableIsActuallyADimension = true;
                 }
             }
@@ -83,7 +79,7 @@ public class NetCDFReader {
                 units.put(name, v.getUnitsString());
 
                 for (Attribute a : v.getAttributes()) {
-                    if (a.getName().compareTo("_FillValue") == 0) {
+                    if (a.getFullName().compareTo("_FillValue") == 0) {
                         float fillValue = a.getNumericValue().floatValue();
                         fillValues.put(name, fillValue);
                     }
@@ -156,9 +152,8 @@ public class NetCDFReader {
         return units.get(varName);
     }
 
-    public ByteBuffer getImage(String colorMapname, String variableName, int time) {
+    public ByteBuffer getImage(String colorMapname, String variableName, int time, boolean logScale) {
         Variable variable = variables.get(variableName);
-        // int times = shapes.get(variableName).get(0);
         int lats = shapes.get(variableName).get(1);
         int lons = shapes.get(variableName).get(2);
 
@@ -171,17 +166,33 @@ public class NetCDFReader {
             Array netCDFArray = variable.slice(0, time).read();
             float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
 
-            Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(variableName),
-                    settings.getCurrentVarMax(variableName));
-
-            for (int lat = 0; lat < lats; lat++) {
-                for (int lon = lons - 1; lon >= 0; lon--) {
-                    Color color = ColormapInterpreter.getColor(colorMapname, colormapDims, data[lat * lons + lon],
-                            fillValues.get(variableName));
-                    result.put((byte) (color.getRed() * 255));
-                    result.put((byte) (color.getGreen() * 255));
-                    result.put((byte) (color.getBlue() * 255));
-                    result.put((byte) 0);
+            Dimensions colormapDims;
+            if (logScale) {
+                colormapDims = new Dimensions((float) Math.log(settings.getCurrentVarMin(variableName) + 1f),
+                        (float) Math.log(settings.getCurrentVarMax(variableName) + 1f));
+                for (int lat = 0; lat < lats; lat++) {
+                    for (int lon = lons - 1; lon >= 0; lon--) {
+                        Color color = ColormapInterpreter.getColor(colorMapname, colormapDims,
+                                (float) Math.log(data[lat * lons + lon] + 1f),
+                                (float) Math.log(fillValues.get(variableName)));
+                        result.put((byte) (color.getRed() * 255));
+                        result.put((byte) (color.getGreen() * 255));
+                        result.put((byte) (color.getBlue() * 255));
+                        result.put((byte) 0);
+                    }
+                }
+            } else {
+                colormapDims = new Dimensions(settings.getCurrentVarMin(variableName),
+                        settings.getCurrentVarMax(variableName));
+                for (int lat = 0; lat < lats; lat++) {
+                    for (int lon = lons - 1; lon >= 0; lon--) {
+                        Color color = ColormapInterpreter.getColor(colorMapname, colormapDims, data[lat * lons + lon],
+                                fillValues.get(variableName));
+                        result.put((byte) (color.getRed() * 255));
+                        result.put((byte) (color.getGreen() * 255));
+                        result.put((byte) (color.getBlue() * 255));
+                        result.put((byte) 0);
+                    }
                 }
             }
 
@@ -207,32 +218,18 @@ public class NetCDFReader {
             maxes.put(variableName, settingsMax);
         }
 
-        // Then Check if we have made a cache file earlier
-        File cacheFile = new File(path + File.separator + ".visualizationCache");
-        if (cacheFile.exists()) {
-            BufferedReader in;
-            String str;
+        // Then Check if we have made a cacheFileManager file earlier
+        float cacheMin = cache.readMin(variableName);
+        if (!Float.isNaN(cacheMin)) {
+            mins.put(variableName, cacheMin);
+            settings.setVarMin(variableName, cacheMin);
 
-            try {
-                in = new BufferedReader(new FileReader(cacheFile));
-                while ((str = in.readLine()) != null) {
-                    if (str.contains(variableName) && str.contains("min")) {
-                        String[] substrings = str.split(" ");
-                        float min = Float.parseFloat(substrings[2]);
-                        mins.put(variableName, min);
-                        settings.setVarMin(variableName, min);
-                    }
-                    if (str.contains(variableName) && str.contains("max")) {
-                        String[] substrings = str.split(" ");
-                        float max = Float.parseFloat(substrings[2]);
-                        maxes.put(variableName, max);
-                        settings.setVarMax(variableName, max);
-                    }
-                }
-                in.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        }
+        float cacheMax = cache.readMax(variableName);
+        if (!Float.isNaN(cacheMax)) {
+            maxes.put(variableName, cacheMax);
+            settings.setVarMax(variableName, cacheMax);
+
         }
 
         float currentMax = Float.MIN_VALUE;
@@ -244,6 +241,8 @@ public class NetCDFReader {
             int times = shapes.get(variableName).get(0);
             int lats = shapes.get(variableName).get(1);
             int lons = shapes.get(variableName).get(2);
+
+            System.out.println("Determining minimum and maximum values for " + variableName + ", please wait");
 
             try {
                 for (int time = 0; time < times; time++) {
@@ -263,31 +262,20 @@ public class NetCDFReader {
                             }
                         }
                     }
-                    System.out.print("t");
+                    System.out.print(".");
                 }
                 System.out.println();
-                System.out.println("Min determined: " + currentMin);
-                System.out.println("Max determined: " + currentMax);
+                System.out.println(variableName + " minimum determined: " + currentMin);
+                System.out.println(variableName + " maximum determined: " + currentMax);
 
-                // Then write to cache file for later
-                if (!cacheFile.exists()) {
-                    cacheFile.createNewFile();
-                }
+                cache.writeMin(variableName, currentMin);
+                mins.put(variableName, currentMin);
+                settings.setVarMin(variableName, currentMin);
 
-                try {
-                    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(cacheFile, true)));
-                    out.println(variableName + " min " + currentMin);
-                    mins.put(variableName, currentMin);
-                    settings.setVarMin(variableName, currentMin);
+                cache.writeMax(variableName, currentMax);
+                maxes.put(variableName, currentMax);
+                settings.setVarMax(variableName, currentMax);
 
-                    out.println(variableName + " max " + currentMax);
-                    maxes.put(variableName, currentMax);
-                    settings.setVarMax(variableName, currentMax);
-
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InvalidRangeException e) {
@@ -322,7 +310,7 @@ public class NetCDFReader {
 
             String dimensionNames = "";
             for (Dimension d : dimensions.get(name)) {
-                dimensionNames += d.getName() + " ";
+                dimensionNames += d.getFullName() + " ";
             }
             result += "Dims: " + dimensionNames + "\n";
             result += "Shape: " + shapes.get(name) + "\n";

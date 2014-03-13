@@ -6,7 +6,6 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -25,35 +24,8 @@ public class WaterCycleApp {
     private static WaterCycleWindow imauWindow;
 
     public static void main(String[] arguments) {
-        String path = "";
-
-        if (arguments.length == 1) {
-            final File cmdlnfile = new File(arguments[0]);
-            if (cmdlnfile.exists()) {
-                if (cmdlnfile.isDirectory()) {
-                    path = cmdlnfile.getPath() + "/";
-                } else if (cmdlnfile.isFile()) {
-                    path = cmdlnfile.getPath()
-                            .substring(0, cmdlnfile.getPath().length() - cmdlnfile.getName().length());
-                } else {
-                    System.err.println("The given directory or file was inaccessible.");
-                    System.err.println("Usage: WaterCycleApp <directory_of_datasets>");
-                    System.exit(1);
-                }
-            } else {
-                System.err.println("The given directory or file didnt exist.");
-                System.err.println("Usage: WaterCycleApp <directory_of_datasets>");
-                System.exit(1);
-            }
-        } else {
-            System.err.println("Usage: WaterCycleApp <directory_of_datasets>");
-            System.exit(1);
-        }
-
-        logger.debug("PATH:" + path);
-
         // Create the Swing interface elements
-        panel = new WaterCyclePanel(path);
+        panel = new WaterCyclePanel();
 
         // Create the GLEventListener
         imauWindow = new WaterCycleWindow(WaterCycleInputHandler.getInstance());
