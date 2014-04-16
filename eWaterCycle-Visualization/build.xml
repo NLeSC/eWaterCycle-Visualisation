@@ -78,6 +78,7 @@
         		<pathelement location="dist/lib/*" />
 			</classpath>        	
         </java>
+	</target>
 
 	<target name="clean" description="clean up">
 		<delete dir="build" />
