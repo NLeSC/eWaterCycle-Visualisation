@@ -68,6 +68,16 @@
 			<classpath refid="lib.jars" />
 		</javadoc>
 	</target>
+	
+	<target name="run" depends="compile">
+        <java classname="nl.esciencecenter.visualization.ewatercycle.WaterCycleApp" fork="true">
+        	<arg value ="-Xmx8g" />
+        	<classpath>
+        		<pathelement location="." />        		
+        		<pathelement location="dist/${ant.project.name}.jar" />
+        		<pathelement location="dist/lib/*" />
+			</classpath>        	
+        </java>
 
 	<target name="clean" description="clean up">
 		<delete dir="build" />
