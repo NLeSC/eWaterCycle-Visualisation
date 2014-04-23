@@ -32,24 +32,28 @@
 		<ant dir="test" target="test-integration" />
 	</target>
 
-
 	<target name="compile" description="compile the source ">
-		<mkdir dir="build/classes" />
-		<mkdir dir="dist" />
+		<mkdir dir="build/classes" />		
 
 		<!-- Compile the java code from src into classes -->
-		<javac srcdir="src" destdir="build/classes" debug="on">
-			<classpath refid="lib.jars" />
-			<compilerarg value="-Xlint" />
+		<javac srcdir="src" destdir="build/classes" debug="on" source="1.7" target="1.7" optimize="true">
+			<include name="**/*.java"/>
+
+			<classpath refid="lib.jars" />			
 		</javac>
 
-		<!-- Put everything in classes into the jar file -->
-		<jar jarfile="dist/${ant.project.name}${version}.jar" basedir="build/classes" />
-
 		<!-- Copy external dependancies to dist directory -->
-		<copy todir="dist">
-			<fileset dir="lib" />
+		<mkdir dir="dist" />
+		<copy todir="dist/lib" flatten="true">
+			<path refid="lib.jars" />
 		</copy>
+
+		<jar destfile="dist/${ant.project.name}.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Main-Class" value="nl.esciencecenter.visualization.ewatercycle.WaterCycleApp"/>
+                <attribute name="Class-Path" value="dist/lib/*.jar:."  />
+            </manifest>
+        </jar>  
 	</target>
 
 	<target name="javadoc" description="generate javadoc for users">
@@ -67,6 +71,17 @@
 			<link href="http://docs.oracle.com/javase/7/docs/api/" />
 			<classpath refid="lib.jars" />
 		</javadoc>
+	</target>
+	
+	<target name="run" depends="compile">
+        <java classname="nl.esciencecenter.visualization.ewatercycle.WaterCycleApp" fork="true">
+        	<arg value ="-Xmx8g" />
+        	<classpath>
+        		<pathelement location="." />        		
+        		<pathelement location="dist/${ant.project.name}.jar" />
+        		<pathelement location="dist/lib/*" />
+			</classpath>        	
+        </java>
 	</target>
 
 	<target name="clean" description="clean up">
