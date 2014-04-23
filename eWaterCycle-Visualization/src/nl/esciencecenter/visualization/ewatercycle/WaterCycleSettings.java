@@ -866,6 +866,10 @@ public class WaterCycleSettings {
         this.cacheFileManager = cacheFileManager;
     }
 
+    public synchronized CacheFileManager getCacheFileManager() {
+        return cacheFileManager;
+    }
+
     public synchronized boolean isRequestedNewConfiguration() {
         return requestedNewConfiguration;
     }

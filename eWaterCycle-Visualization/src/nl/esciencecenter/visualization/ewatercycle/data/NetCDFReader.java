@@ -46,7 +46,7 @@ public class NetCDFReader {
 
     public NetCDFReader(File file) {
         this.ncfile = open(file);
-        cache = new CacheFileManager(file.getParent());
+        cache = settings.getCacheFileManager();
 
         variables = new HashMap<String, Variable>();
         units = new HashMap<String, String>();

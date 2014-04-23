@@ -133,11 +133,14 @@ public class WaterCyclePanel extends NeonInterfacePanel {
 
     protected GLCanvas glCanvas;
 
-    private CacheFileManager cache;
+    private final CacheFileManager cache;
 
     private final WaterCycleInputHandler inputHandler = WaterCycleInputHandler.getInstance();
 
     public WaterCyclePanel() {
+        cache = new CacheFileManager(System.getProperty("user.dir"));
+        settings.setCacheFileManager(cache);
+
         keyFrames = new ArrayList<KeyFrame>();
 
         setLayout(new BorderLayout(0, 0));
@@ -680,8 +683,6 @@ public class WaterCyclePanel extends NeonInterfacePanel {
             for (String v : timer.getVariables()) {
                 variables.add(v);
             }
-            cache = new CacheFileManager(System.getProperty("user.dir"));
-            settings.setCacheFileManager(cache);
             settings.initDefaultVariables(variables);
 
             dataConfig.removeAll();

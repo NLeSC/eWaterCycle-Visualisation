@@ -8,14 +8,20 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class CacheFileManager {
+    private final static Logger logger = LoggerFactory.getLogger(CacheFileManager.class);
     private final File cacheFile;
 
     public CacheFileManager(String path) {
+        logger.debug("User dir: " + System.getProperty("user.dir"));
+        logger.debug("Cache Used dir: " + path);
         cacheFile = new File(path + File.separator + ".visualizationCache");
     }
 
-    public float readMin(String variableName) {
+    public synchronized float readMin(String variableName) {
         float result = Float.NaN;
 
         // Check if we have made a cacheFileManager file earlier
@@ -40,7 +46,7 @@ public class CacheFileManager {
         return result;
     }
 
-    public void writeMin(String variableName, float value) {
+    public synchronized void writeMin(String variableName, float value) {
         if (!cacheFile.exists()) {
             cacheFile.getParentFile().mkdirs();
             try {
@@ -61,7 +67,7 @@ public class CacheFileManager {
         }
     }
 
-    public float readMax(String variableName) {
+    public synchronized float readMax(String variableName) {
         float result = Float.NaN;
 
         // Check if we have made a cacheFileManager file earlier
@@ -86,7 +92,7 @@ public class CacheFileManager {
         return result;
     }
 
-    public void writeMax(String variableName, float value) {
+    public synchronized void writeMax(String variableName, float value) {
         if (!cacheFile.exists()) {
             try {
                 cacheFile.getParentFile().mkdirs();
@@ -106,7 +112,7 @@ public class CacheFileManager {
         }
     }
 
-    public String readColormap(String variableName) {
+    public synchronized String readColormap(String variableName) {
         String result = "";
 
         // Check if we have made a cacheFileManager file earlier
@@ -131,7 +137,7 @@ public class CacheFileManager {
         return result;
     }
 
-    public void writeColormap(String variableName, String value) {
+    public synchronized void writeColormap(String variableName, String value) {
         try {
             if (!cacheFile.exists()) {
                 cacheFile.getParentFile().mkdirs();
