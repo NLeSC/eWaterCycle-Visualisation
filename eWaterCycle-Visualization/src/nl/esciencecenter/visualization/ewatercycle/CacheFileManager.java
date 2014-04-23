@@ -42,6 +42,7 @@ public class CacheFileManager {
 
     public void writeMin(String variableName, float value) {
         if (!cacheFile.exists()) {
+            cacheFile.getParentFile().mkdirs();
             try {
                 cacheFile.createNewFile();
             } catch (IOException e) {
@@ -88,6 +89,7 @@ public class CacheFileManager {
     public void writeMax(String variableName, float value) {
         if (!cacheFile.exists()) {
             try {
+                cacheFile.getParentFile().mkdirs();
                 cacheFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -132,6 +134,7 @@ public class CacheFileManager {
     public void writeColormap(String variableName, String value) {
         try {
             if (!cacheFile.exists()) {
+                cacheFile.getParentFile().mkdirs();
                 cacheFile.createNewFile();
             }
 
