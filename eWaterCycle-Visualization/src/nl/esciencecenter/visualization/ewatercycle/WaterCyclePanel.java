@@ -680,7 +680,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
             for (String v : timer.getVariables()) {
                 variables.add(v);
             }
-            cache = new CacheFileManager(files[0].getParent());
+            cache = new CacheFileManager(System.getProperty("user.dir"));
             settings.setCacheFileManager(cache);
             settings.initDefaultVariables(variables);
 
