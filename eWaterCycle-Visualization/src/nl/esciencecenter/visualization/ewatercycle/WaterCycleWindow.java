@@ -30,7 +30,7 @@ import nl.esciencecenter.neon.shaders.ShaderProgramLoader;
 import nl.esciencecenter.neon.text.MultiColorText;
 import nl.esciencecenter.neon.text.jogampexperimental.Font;
 import nl.esciencecenter.neon.text.jogampexperimental.FontFactory;
-import nl.esciencecenter.neon.textures.Texture2D;
+import nl.esciencecenter.visualization.ewatercycle.data.EfficientTextureStorage.TextureCombo;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
 import nl.esciencecenter.visualization.ewatercycle.data.TimedPlayer;
 
@@ -103,6 +103,8 @@ public class WaterCycleWindow implements GLEventListener {
             * Math.sin(ftheta) * Math.sin(phi)), (float) (radius * Math.cos(ftheta)));
     final Point4 at = new Point4(0.0f, 0.0f, 0.0f);
     final Float4Vector up = new Float4Vector(0.0f, 1.0f, 0.0f, 0.0f);
+
+    private final boolean requestedNewConfiguration = false;
 
     public WaterCycleWindow(WaterCycleInputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
@@ -342,6 +344,8 @@ public class WaterCycleWindow implements GLEventListener {
             timer.setScreenshotNeeded(false);
         }
 
+        // timer.clearAdvance();
+
         contextOff(drawable);
     }
 
@@ -361,48 +365,82 @@ public class WaterCycleWindow implements GLEventListener {
         drawAtmosphere(gl, mv, atmosphereFrameBufferObject);
         // blur(gl, atmosphereFrameBufferObject, fsq, 1, 2, 4);
 
-        SurfaceTextureDescription currentDesc;
+        if (settings.isRequestedNewConfiguration()) {
+            SurfaceTextureDescription currentDesc;
 
-        for (int i = 0; i < cachedScreens; i++) {
-            currentDesc = settings.getSurfaceDescription(i);
-            if (currentDesc != null && !currentDesc.equals(cachedTextureDescriptions[i]) || reshaped) {
-                logger.debug(currentDesc.toString());
+            boolean allRequestsFullfilled = true;
+            for (int i = 0; i < cachedScreens; i++) {
+                // Get the currently needed description from the settings
+                // manager
+                currentDesc = settings.getSurfaceDescription(i);
 
-                List<Texture2D> oldTextures = timer.getEfficientTextureStorage()
-                        .requestNewConfiguration(i, currentDesc);
-                // Remove all of the (now unused) textures
-                for (Texture2D tex : oldTextures) {
-                    tex.delete(gl);
+                if (currentDesc != null) {
+                    // Ask the TextureStorage for the currently displayed/ready
+                    // image
+                    TextureCombo result = timer.getEfficientTextureStorage().getImages(i);
+
+                    if (result.getDescription() != currentDesc) {
+                        // Check if we need to request new images, or if we are
+                        // waiting for new images
+                        if (!timer.getEfficientTextureStorage().isRequested(currentDesc)) {
+                            // We need to request new ones
+                            logger.debug(currentDesc.toString());
+
+                            List<Texture2D> oldTextures = timer.getEfficientTextureStorage().requestNewConfiguration(i,
+                                    currentDesc);
+                            // Remove all of the (now unused) textures
+                            for (Texture2D tex : oldTextures) {
+                                tex.delete(gl);
+                            }
+                        }
+                        // We are waiting for images to be generated
+                        allRequestsFullfilled = false;
+                    } else {
+                        // We might have received a new request here
+                        if (cachedSurfaceTextures[i] != result.getSurfaceTexture()
+                                || cachedLegendTextures[i] != result.getLegendTexture()) {
+                            logger.debug("adding new texture for screen " + i + " to opengl: " + currentDesc);
+
+                            // Apparently a new image was just created for us,
+                            // so
+                            // lets store it
+                            cachedSurfaceTextures[i] = result.getSurfaceTexture();
+                            cachedLegendTextures[i] = result.getLegendTexture();
+
+                            cachedSurfaceTextures[i].init(gl);
+                            cachedLegendTextures[i].init(gl);
+
+                            // And set the appropriate text to accompany it.
+                            String variableName = currentDesc.getVarName();
+                            String fancyName = variableName;
+                            varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
+
+                            String min, max;
+                            if (currentDesc.isDiff()) {
+                                min = Float.toString(settings.getCurrentVarDiffMin(currentDesc.getVarName()));
+                                max = Float.toString(settings.getCurrentVarDiffMax(currentDesc.getVarName()));
+                            } else {
+                                min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
+                                max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
+                            }
+                            dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.WHITE,
+                                    fontSize);
+                            dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
+                            legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
+                            legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
+                        } else {
+                            logger.error("Not a new request ??? " + currentDesc);
+                        }
+                    }
                 }
-
-                String variableName = currentDesc.getVarName();
-                String fancyName = variableName;
-                // String units = timer.getVariableUnits(variableName);
-                // fancyName += " in " + units;
-                varNames[i].setString(gl, fancyName, Color4.WHITE, fontSize);
-
-                String min, max;
-                if (currentDesc.isDiff()) {
-                    min = Float.toString(settings.getCurrentVarDiffMin(currentDesc.getVarName()));
-                    max = Float.toString(settings.getCurrentVarDiffMax(currentDesc.getVarName()));
-                } else {
-                    min = Float.toString(settings.getCurrentVarMin(currentDesc.getVarName()));
-                    max = Float.toString(settings.getCurrentVarMax(currentDesc.getVarName()));
-                }
-                dates[i].setString(gl, settings.getFancyDate(currentDesc.getFrameNumber()), Color4.WHITE, fontSize);
-                dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
-                legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
-                legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
-
-                cachedTextureDescriptions[i] = currentDesc;
-
-                cachedSurfaceTextures[i] = timer.getEfficientTextureStorage().getSurfaceImage(i);
-                cachedLegendTextures[i] = timer.getEfficientTextureStorage().getLegendImage(i);
-
-                cachedSurfaceTextures[i].init(gl);
-                cachedLegendTextures[i].init(gl);
             }
 
+            if (allRequestsFullfilled) {
+                settings.setRequestedNewConfiguration(false);
+            }
+        }
+
+        for (int i = 0; i < cachedScreens; i++) {
             if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
                 drawSingleWindow(gl, mv, i, cachedLegendTextures[i], cachedSurfaceTextures[i],
                         cachedFrameBufferObjects[i], clickCoords);

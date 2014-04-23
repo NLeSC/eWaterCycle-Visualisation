@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.media.opengl.GL3;
 
@@ -28,11 +30,73 @@ public class DatasetManager {
     private int latArraySize;
     private int lonArraySize;
 
+    ExecutorService executor;
+
+    // private final List<SurfaceTextureDescription> queue;
+
+    private class Worker implements Runnable {
+        private final SurfaceTextureDescription desc;
+
+        public Worker(SurfaceTextureDescription desc) {
+            this.desc = desc;
+        }
+
+        @Override
+        public void run() {
+            int frameNumber = desc.getFrameNumber();
+            String varName = desc.getVarName();
+
+            NetCDFReader currentReader = readers.get(varName);
+
+            if (frameNumber < 0 || frameNumber > currentReader.getAvailableFrames(varName)) {
+                logger.debug("buildImages : Requested frameNumber  " + frameNumber + " out of range.");
+            }
+
+            ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(), varName, frameNumber,
+                    desc.isLogScale());
+
+            Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
+                    settings.getCurrentVarMax(varName));
+
+            int height = 500;
+            int width = 1;
+            ByteBuffer legendBuf = ByteBuffer.allocate(height * width * 4);
+
+            for (int row = height - 1; row >= 0; row--) {
+                float index = row / (float) height;
+                float var = (index * colormapDims.getDiff()) + colormapDims.getMin();
+
+                Color c = ColormapInterpreter.getColor(desc.getColorMap(), colormapDims, var);
+
+                for (int col = 0; col < width; col++) {
+                    legendBuf.put((byte) (255 * c.getRed()));
+                    legendBuf.put((byte) (255 * c.getGreen()));
+                    legendBuf.put((byte) (255 * c.getBlue()));
+                }
+            }
+
+            legendBuf.flip();
+
+            effTexStorage.setImageCombo(desc, surfaceBuffer, legendBuf);
+        }
+
+    }
+
     public DatasetManager(File[] files) {
+        // queue = new ArrayList<SurfaceTextureDescription>();
+        executor = Executors.newFixedThreadPool(4);
+
         init(files);
     }
 
-    private void init(File[] files) {
+    public synchronized void shutdown() {
+        executor.shutdown();
+
+        while (!executor.isTerminated()) {
+        }
+    }
+
+    private synchronized void init(File[] files) {
         availableFrameSequenceNumbers = new ArrayList<Integer>();
         readers = new HashMap<String, NetCDFReader>();
 
@@ -103,57 +167,66 @@ public class DatasetManager {
 
     }
 
-    public void buildImages(SurfaceTextureDescription desc) {
-        int frameNumber = desc.getFrameNumber();
-        String varName = desc.getVarName();
-
-        NetCDFReader currentReader = readers.get(varName);
-
-        if (frameNumber < 0 || frameNumber > currentReader.getAvailableFrames(varName)) {
-            logger.debug("buildImages : Requested frameNumber  " + frameNumber + " out of range.");
-        }
-
-        ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(), varName, frameNumber, desc.isLogScale());
-        effTexStorage.setSurfaceImage(desc, surfaceBuffer);
-
-        Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName), settings.getCurrentVarMax(varName));
-
-        int height = 500;
-        int width = 1;
-        ByteBuffer outBuf = ByteBuffer.allocate(height * width * 4);
-
-        for (int row = height - 1; row >= 0; row--) {
-            float index = row / (float) height;
-            float var = (index * colormapDims.getDiff()) + colormapDims.getMin();
-
-            Color c = ColormapInterpreter.getColor(desc.getColorMap(), colormapDims, var);
-
-            for (int col = 0; col < width; col++) {
-                outBuf.put((byte) (255 * c.getRed()));
-                outBuf.put((byte) (255 * c.getGreen()));
-                outBuf.put((byte) (255 * c.getBlue()));
-                outBuf.put((byte) 0);
-            }
-        }
-
-        outBuf.flip();
-
-        effTexStorage.setLegendImage(desc, outBuf);
+    public synchronized void buildImages(SurfaceTextureDescription desc) {
+        // for (int i = 0; i < 10; i++) {
+        Runnable worker = new Worker(desc);
+        executor.execute(worker);
+        // }
+        // int frameNumber = desc.getFrameNumber();
+        // String varName = desc.getVarName();
+        //
+        // NetCDFReader currentReader = readers.get(varName);
+        //
+        // if (frameNumber < 0 || frameNumber >
+        // currentReader.getAvailableFrames(varName)) {
+        // logger.debug("buildImages : Requested frameNumber  " + frameNumber +
+        // " out of range.");
+        // }
+        //
+        // ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(),
+        // varName, frameNumber, desc.isLogScale());
+        // effTexStorage.setSurfaceImage(desc, surfaceBuffer);
+        //
+        // Dimensions colormapDims = new
+        // Dimensions(settings.getCurrentVarMin(varName),
+        // settings.getCurrentVarMax(varName));
+        //
+        // int height = 500;
+        // int width = 1;
+        // ByteBuffer outBuf = ByteBuffer.allocate(height * width * 4);
+        //
+        // for (int row = height - 1; row >= 0; row--) {
+        // float index = row / (float) height;
+        // float var = (index * colormapDims.getDiff()) + colormapDims.getMin();
+        //
+        // Color c = ColormapInterpreter.getColor(desc.getColorMap(),
+        // colormapDims, var);
+        //
+        // for (int col = 0; col < width; col++) {
+        // outBuf.put((byte) (255 * c.getRed()));
+        // outBuf.put((byte) (255 * c.getGreen()));
+        // outBuf.put((byte) (255 * c.getBlue()));
+        // }
+        // }
+        //
+        // outBuf.flip();
+        //
+        // effTexStorage.setLegendImage(desc, outBuf);
     }
 
-    public EfficientTextureStorage getEfficientTextureStorage() {
+    public synchronized EfficientTextureStorage getEfficientTextureStorage() {
         return effTexStorage;
     }
 
-    public int getFrameNumberOfIndex(int index) {
+    public synchronized int getFrameNumberOfIndex(int index) {
         return availableFrameSequenceNumbers.get(index);
     }
 
-    public int getIndexOfFrameNumber(int frameNumber) {
+    public synchronized int getIndexOfFrameNumber(int frameNumber) {
         return availableFrameSequenceNumbers.indexOf(frameNumber);
     }
 
-    public int getPreviousFrameNumber(int frameNumber) throws IOException {
+    public synchronized int getPreviousFrameNumber(int frameNumber) throws IOException {
         int nextNumber = getIndexOfFrameNumber(frameNumber) - 1;
 
         if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
@@ -163,7 +236,7 @@ public class DatasetManager {
         }
     }
 
-    public int getNextFrameNumber(int frameNumber) throws IOException {
+    public synchronized int getNextFrameNumber(int frameNumber) throws IOException {
         int nextNumber = getIndexOfFrameNumber(frameNumber) + 1;
 
         if (nextNumber >= 0 && nextNumber < availableFrameSequenceNumbers.size()) {
@@ -173,11 +246,11 @@ public class DatasetManager {
         }
     }
 
-    public int getNumFrames() {
+    public synchronized int getNumFrames() {
         return availableFrameSequenceNumbers.size();
     }
 
-    public ArrayList<String> getVariables() {
+    public synchronized ArrayList<String> getVariables() {
         ArrayList<String> result = new ArrayList<String>();
         for (Map.Entry<String, NetCDFReader> readerEntry : readers.entrySet()) {
             result.add(readerEntry.getKey());
@@ -185,23 +258,23 @@ public class DatasetManager {
         return result;
     }
 
-    public String getVariableUnits(String varName) {
+    public synchronized String getVariableUnits(String varName) {
         return readers.get(varName).getUnits(varName);
     }
 
-    public int getImageWidth() {
+    public synchronized int getImageWidth() {
         return lonArraySize;
     }
 
-    public int getImageHeight() {
+    public synchronized int getImageHeight() {
         return latArraySize;
     }
 
-    public float getMinValueContainedInDataset(String varName) {
+    public synchronized float getMinValueContainedInDataset(String varName) {
         return readers.get(varName).getMinValue(varName);
     }
 
-    public float getMaxValueContainedInDataset(String varName) {
+    public synchronized float getMaxValueContainedInDataset(String varName) {
         return readers.get(varName).getMaxValue(varName);
     }
 }

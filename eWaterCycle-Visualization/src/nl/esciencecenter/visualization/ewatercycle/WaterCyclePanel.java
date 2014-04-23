@@ -32,11 +32,13 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicSliderUI;
 
 import nl.esciencecenter.neon.NeonInterfacePanel;
+import nl.esciencecenter.neon.math.Float3Vector;
 import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.neon.swing.GoggleSwing;
@@ -54,6 +56,63 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         NONE, DATA, VISUAL, MOVIE
     }
 
+    public class KeyFrame {
+        private Component uiElement;
+        private final int frameNumber;
+        private Float3Vector rotation;
+        private float viewDist;
+
+        public KeyFrame(int frameNumber) {
+            this.frameNumber = frameNumber;
+        }
+
+        public Component getUiElement() {
+            return uiElement;
+        }
+
+        public void setUiElement(Component uiElement) {
+            this.uiElement = uiElement;
+        }
+
+        public int getFrameNumber() {
+            return frameNumber;
+        }
+
+        public Float3Vector getRotation() {
+            return rotation;
+        }
+
+        public void setRotation(Float3Vector rotation) {
+            this.rotation = rotation;
+        }
+
+        public float getViewDist() {
+            return viewDist;
+        }
+
+        public void setViewDist(float viewDist) {
+            this.viewDist = viewDist;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 1;
+            hash = hash * 17 + frameNumber;
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof KeyFrame && ((KeyFrame) other).hashCode() == this.hashCode()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    private final ArrayList<KeyFrame> keyFrames;
+
     private final WaterCycleSettings settings = WaterCycleSettings.getInstance();
     private final static Logger logger = LoggerFactory.getLogger(WaterCyclePanel.class);
 
@@ -62,11 +121,11 @@ public class WaterCyclePanel extends NeonInterfacePanel {
     protected CustomJSlider timeBar;
 
     protected JFormattedTextField frameCounter, stepSizeField;
-    private TweakState currentConfigState = TweakState.NONE;
+    private final TweakState currentConfigState = TweakState.NONE;
 
-    private final JPanel configPanel;
+    private final JTabbedPane configPanel;
 
-    private final JPanel dataConfig, movieConfig;
+    private final JPanel dataConfig, recordingConfig;
 
     private static TimedPlayer timer;
 
@@ -76,7 +135,11 @@ public class WaterCyclePanel extends NeonInterfacePanel {
 
     private CacheFileManager cache;
 
+    private final WaterCycleInputHandler inputHandler = WaterCycleInputHandler.getInstance();
+
     public WaterCyclePanel() {
+        keyFrames = new ArrayList<KeyFrame>();
+
         setLayout(new BorderLayout(0, 0));
 
         variables = new ArrayList<String>();
@@ -158,25 +221,30 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         final JPanel bottomPanel = createBottomPanel();
 
         // Add the tweaks panels
-        configPanel = new JPanel();
+        configPanel = new JTabbedPane();
         add(configPanel, BorderLayout.WEST);
-        configPanel.setLayout(new BoxLayout(configPanel, BoxLayout.Y_AXIS));
-        configPanel.setPreferredSize(new Dimension(240, 0));
-        configPanel.setVisible(false);
+        configPanel.setPreferredSize(new Dimension(240, 10));
 
         dataConfig = new JPanel();
         dataConfig.setLayout(new BoxLayout(dataConfig, BoxLayout.Y_AXIS));
         dataConfig.setMinimumSize(configPanel.getPreferredSize());
-        createDataTweakPanel();
+        createDataPanel(dataConfig);
+        configPanel.addTab("Data", dataConfig);
 
-        movieConfig = new JPanel();
+        recordingConfig = new JPanel();
+        recordingConfig.setLayout(new BoxLayout(recordingConfig, BoxLayout.Y_AXIS));
+        recordingConfig.setMinimumSize(configPanel.getPreferredSize());
+        createRecordingPanel(recordingConfig);
+        configPanel.addTab("Recording", recordingConfig);
+
+        configPanel.setVisible(true);
 
         add(bottomPanel, BorderLayout.SOUTH);
 
         // Read command line file information
         // handlePresetFiles();
 
-        setTweakState(TweakState.DATA);
+        // setTweakState(TweakState.DATA);
 
         setVisible(true);
     }
@@ -358,57 +426,92 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         return bottomPanel;
     }
 
-    private void createMovieTweakPanel() {
-        movieConfig.removeAll();
-
-        final ItemListener listener = new ItemListener() {
+    private void createRecordingPanel(JPanel targetPanel) {
+        ActionListener addKeyFrameListener = new ActionListener() {
             @Override
-            public void itemStateChanged(ItemEvent arg0) {
-                setTweakState(TweakState.NONE);
-            }
-        };
-        movieConfig.add(GoggleSwing.titleBox("Movie Creator", listener));
+            public void actionPerformed(ActionEvent e) {
+                int frameNumber = settings.getSurfaceDescription(0).getFrameNumber();
+                final KeyFrame newKeyFrame = new KeyFrame(frameNumber);
 
-        final ItemListener checkBoxListener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                settings.setMovieRotate(e.getStateChange());
-                timer.redraw();
-            }
-        };
-        movieConfig.add(GoggleSwing.checkboxBox("", new GoggleSwing.CheckBoxItem("Rotation", settings.getMovieRotate(),
-                checkBoxListener)));
-
-        final JLabel rotationSetting = new JLabel("" + settings.getMovieRotationSpeedDef());
-        final ChangeListener movieRotationSpeedListener = new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                final JSlider source = (JSlider) e.getSource();
-                if (source.hasFocus()) {
-                    settings.setMovieRotationSpeed(source.getValue() * .25f);
-                    rotationSetting.setText("" + settings.getMovieRotationSpeedDef());
+                if (keyFrames.contains(newKeyFrame)) {
+                    keyFrames.remove(newKeyFrame);
                 }
-            }
-        };
-        movieConfig.add(GoggleSwing.sliderBox("Rotation Speed", movieRotationSpeedListener,
-                (int) (settings.getMovieRotationSpeedMin() * 4f), (int) (settings.getMovieRotationSpeedMax() * 4f), 1,
-                (int) (settings.getMovieRotationSpeedDef() * 4f), rotationSetting));
 
-        movieConfig.add(GoggleSwing.buttonBox("", new GoggleSwing.ButtonBoxItem("Start Recording",
-                new ActionListener() {
+                ActionListener removeKeyFrameListener = new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        timer.movieMode();
+                        keyFrames.remove(newKeyFrame);
+                        recordingConfig.removeAll();
+                        createRecordingPanel(recordingConfig);
+                        validate();
+                        repaint();
                     }
-                })));
+                };
 
-        validate();
-        repaint();
+                ArrayList<Component> axesVboxList = new ArrayList<Component>();
+                ArrayList<Component> axesHboxList2 = new ArrayList<Component>();
+
+                Float3Vector rotation = new Float3Vector(inputHandler.getRotation());
+                newKeyFrame.setRotation(rotation);
+                float viewDist = inputHandler.getViewDist();
+                newKeyFrame.setViewDist(viewDist);
+
+                axesHboxList2.add(new JLabel("#: " + frameNumber + " Axes: " + (int) rotation.getX() + " "
+                        + (int) rotation.getY() + " " + (int) rotation.getZ()));
+                axesHboxList2.add(Box.createHorizontalGlue());
+                JButton removeButton = new JButton(new ImageIcon("images/RemoveIcon15.png"));
+                removeButton.addActionListener(removeKeyFrameListener);
+                axesHboxList2.add(removeButton);
+
+                axesVboxList.add(GoggleSwing.hBoxedComponents(axesHboxList2, false));
+                newKeyFrame.setUiElement(GoggleSwing.vBoxedComponents(axesVboxList, true));
+
+                keyFrames.add(newKeyFrame);
+
+                recordingConfig.removeAll();
+                createRecordingPanel(recordingConfig);
+                validate();
+                repaint();
+            }
+        };
+
+        ActionListener playSequenceListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                timer.startSequence(keyFrames, false);
+            }
+        };
+
+        ActionListener recordSequenceListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                timer.startSequence(keyFrames, true);
+            }
+        };
+
+        ActionListener clearListListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                keyFrames.clear();
+                recordingConfig.removeAll();
+                createRecordingPanel(recordingConfig);
+                validate();
+                repaint();
+            }
+        };
+
+        for (KeyFrame keyFrame : keyFrames) {
+            targetPanel.add(keyFrame.getUiElement());
+        }
+
+        targetPanel.add(GoggleSwing.buttonBox("", new GoggleSwing.ButtonBoxItem("Add current", addKeyFrameListener),
+                new GoggleSwing.ButtonBoxItem("Play Sequence", playSequenceListener), new GoggleSwing.ButtonBoxItem(
+                        "Record Sequence", recordSequenceListener), new GoggleSwing.ButtonBoxItem("Clear All",
+                        clearListListener)));
+
     }
 
-    private void createDataTweakPanel() {
-        dataConfig.removeAll();
-
+    private void createDataPanel(JPanel targetPanel) {
         if (timer.isInitialized()) {
             final ArrayList<Component> vcomponents = new ArrayList<Component>();
             JLabel windowlabel = new JLabel("Window Selection");
@@ -438,7 +541,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
             vcomponents.add(comboBox);
             vcomponents.add(GoggleSwing.verticalStrut(5));
 
-            dataConfig.add(GoggleSwing.vBoxedComponents(vcomponents, true));
+            targetPanel.add(GoggleSwing.vBoxedComponents(vcomponents, true));
 
             String[] dataModes = SurfaceTextureDescription.getDataModes();
 
@@ -548,9 +651,9 @@ public class WaterCyclePanel extends NeonInterfacePanel {
 
                 screenVcomponents.add(selectionLegendSlider);
 
-                dataConfig.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
+                targetPanel.add(GoggleSwing.vBoxedComponents(screenVcomponents, true));
             }
-            dataConfig.add(Box.createVerticalGlue());
+            targetPanel.add(Box.createVerticalGlue());
         }
 
         validate();
@@ -581,7 +684,10 @@ public class WaterCyclePanel extends NeonInterfacePanel {
             settings.setCacheFileManager(cache);
             settings.initDefaultVariables(variables);
 
-            createDataTweakPanel();
+            dataConfig.removeAll();
+            createDataPanel(dataConfig);
+            validate();
+            repaint();
 
             final String path = files[0].getParent() + "screenshots/";
 
@@ -611,21 +717,21 @@ public class WaterCyclePanel extends NeonInterfacePanel {
         }
     }
 
-    // Callback methods for the various ui actions and listeners
-    public void setTweakState(TweakState newState) {
-        configPanel.setVisible(false);
-        configPanel.remove(dataConfig);
-        validate();
-        repaint();
-
-        currentConfigState = newState;
-
-        if (currentConfigState == TweakState.NONE) {
-        } else if (currentConfigState == TweakState.DATA) {
-            configPanel.setVisible(true);
-            configPanel.add(dataConfig, BorderLayout.WEST);
-        }
-    }
+    // // Callback methods for the various ui actions and listeners
+    // public void setTweakState(TweakState newState) {
+    // configPanel.setVisible(false);
+    // configPanel.remove(dataConfig);
+    // validate();
+    // repaint();
+    //
+    // currentConfigState = newState;
+    //
+    // if (currentConfigState == TweakState.NONE) {
+    // } else if (currentConfigState == TweakState.DATA) {
+    // configPanel.setVisible(true);
+    // configPanel.add(dataConfig, BorderLayout.WEST);
+    // }
+    // }
 
     public static TimedPlayer getTimer() {
         return timer;

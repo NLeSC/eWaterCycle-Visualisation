@@ -42,6 +42,8 @@ public class NetCDFReader {
 
     private final CacheFileManager cache;
 
+    private long startTimeMillis, stopTimeMillis;
+
     public NetCDFReader(File file) {
         this.ncfile = open(file);
         cache = new CacheFileManager(file.getParent());
@@ -159,13 +161,20 @@ public class NetCDFReader {
 
         logger.debug("creating image size: " + lats + "x" + lons);
 
-        ByteBuffer result = Buffers.newDirectByteBuffer(lats * lons * 4);
-        result.rewind();
+        ByteBuffer result = Buffers.newDirectByteBuffer(lats * lons * 3);
 
         try {
+            startTimeMillis = System.currentTimeMillis();
             Array netCDFArray = variable.slice(0, time).read();
             float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
+            stopTimeMillis = System.currentTimeMillis();
 
+            logger.debug("---");
+            logger.debug("Read: " + ((long) data.length * (Float.SIZE / 8)) + " bytes, at "
+                    + (((long) data.length * (Float.SIZE / 8) * 1000) / (double) (stopTimeMillis - startTimeMillis))
+                    / 1000000 + " MB/sec.");
+
+            startTimeMillis = System.currentTimeMillis();
             Dimensions colormapDims;
             if (logScale) {
                 colormapDims = new Dimensions((float) Math.log(settings.getCurrentVarMin(variableName) + 1f),
@@ -178,7 +187,6 @@ public class NetCDFReader {
                         result.put((byte) (color.getRed() * 255));
                         result.put((byte) (color.getGreen() * 255));
                         result.put((byte) (color.getBlue() * 255));
-                        result.put((byte) 0);
                     }
                 }
             } else {
@@ -191,10 +199,13 @@ public class NetCDFReader {
                         result.put((byte) (color.getRed() * 255));
                         result.put((byte) (color.getGreen() * 255));
                         result.put((byte) (color.getBlue() * 255));
-                        result.put((byte) 0);
                     }
                 }
             }
+            stopTimeMillis = System.currentTimeMillis();
+            logger.debug("Colormap creation: : "
+                    + (((long) data.length * (Float.SIZE / 8) * 1000) / (double) (stopTimeMillis - startTimeMillis))
+                    / 1000000 + " MB/sec.");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -202,7 +213,7 @@ public class NetCDFReader {
             e.printStackTrace();
         }
 
-        result.rewind();
+        result.flip();
 
         return result;
     }

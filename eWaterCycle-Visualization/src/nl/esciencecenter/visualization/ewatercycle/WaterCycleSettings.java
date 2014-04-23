@@ -120,6 +120,7 @@ public class WaterCycleSettings {
     private int number_of_screens_row = 2;
 
     private CacheFileManager cacheFileManager;
+    private boolean requestedNewConfiguration;
 
     private WaterCycleSettings() {
         super();
@@ -313,31 +314,31 @@ public class WaterCycleSettings {
         initializeScreenDescriptions();
     }
 
-    private void initializeScreenDescriptions() {
+    private synchronized void initializeScreenDescriptions() {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
     }
 
-    public void setWaittimeBeforeRetry(long value) {
+    public synchronized void setWaittimeBeforeRetry(long value) {
         WAITTIME_FOR_RETRY = value;
     }
 
-    public void setWaittimeMovie(long value) {
+    public synchronized void setWaittimeMovie(long value) {
         WAITTIME_FOR_MOVIE = value;
     }
 
-    public void setEpsilon(float value) {
+    public synchronized void setEpsilon(float value) {
         EPSILON = value;
     }
 
-    public void setFileExtensionLength(int value) {
+    public synchronized void setFileExtensionLength(int value) {
         FILE_EXTENSION_LENGTH = value;
     }
 
-    public void setFileNumberLength(int value) {
+    public synchronized void setFileNumberLength(int value) {
         FILE_NUMBER_LENGTH = value;
     }
 
-    public void setCurrentExtension(String value) {
+    public synchronized void setCurrentExtension(String value) {
         CURRENT_POSTFIX = value;
     }
 
@@ -349,47 +350,47 @@ public class WaterCycleSettings {
         return WAITTIME_FOR_MOVIE;
     }
 
-    public float getEpsilon() {
+    public synchronized float getEpsilon() {
         return EPSILON;
     }
 
-    public int getFileExtensionLength() {
+    public synchronized int getFileExtensionLength() {
         return FILE_EXTENSION_LENGTH;
     }
 
-    public int getFileNumberLength() {
+    public synchronized int getFileNumberLength() {
         return FILE_NUMBER_LENGTH;
     }
 
-    public String[] getAcceptableExtensions() {
+    public synchronized String[] getAcceptableExtensions() {
         return ACCEPTABLE_POSTFIXES;
     }
 
-    public String getCurrentExtension() {
+    public synchronized String getCurrentExtension() {
         return CURRENT_POSTFIX;
     }
 
-    public int getPreprocessAmount() {
+    public synchronized int getPreprocessAmount() {
         return PREPROCESSING_AMOUNT;
     }
 
-    public void setPreprocessAmount(int value) {
+    public synchronized void setPreprocessAmount(int value) {
         PREPROCESSING_AMOUNT = value;
     }
 
-    public int getDepthMin() {
+    public synchronized int getDepthMin() {
         return DEPTH_MIN;
     }
 
-    public void setDepthMin(int value) {
+    public synchronized void setDepthMin(int value) {
         DEPTH_MIN = value;
     }
 
-    public int getDepthDef() {
+    public synchronized int getDepthDef() {
         return DEPTH_DEF;
     }
 
-    public void setFrameNumber(int value) {
+    public synchronized void setFrameNumber(int value) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
             screenDescriptions[i] = new SurfaceTextureDescription(value, currentState.getDepth(),
@@ -399,7 +400,7 @@ public class WaterCycleSettings {
         }
     }
 
-    public void setDepth(int value) {
+    public synchronized void setDepth(int value) {
         for (int i = 0; i < number_of_screens_col * number_of_screens_row; i++) {
             SurfaceTextureDescription currentState = screenDescriptions[i];
             screenDescriptions[i] = new SurfaceTextureDescription(currentState.getFrameNumber(), value,
@@ -411,23 +412,23 @@ public class WaterCycleSettings {
         DEPTH_DEF = value;
     }
 
-    public int getDepthMax() {
+    public synchronized int getDepthMax() {
         return DEPTH_MAX;
     }
 
-    public void setDepthMax(int value) {
+    public synchronized void setDepthMax(int value) {
         DEPTH_MAX = value;
     }
 
-    public void setWindowSelection(int i) {
+    public synchronized void setWindowSelection(int i) {
         WINDOW_SELECTION = i;
     }
 
-    public int getWindowSelection() {
+    public synchronized int getWindowSelection() {
         return WINDOW_SELECTION;
     }
 
-    public String selectionToString(int windowSelection) {
+    public synchronized String selectionToString(int windowSelection) {
         if (windowSelection == 1) {
             return "Left Top";
         } else if (windowSelection == 2) {
@@ -476,199 +477,200 @@ public class WaterCycleSettings {
         }
     }
 
-    public boolean isIMAGE_STREAM_OUTPUT() {
+    public synchronized boolean isIMAGE_STREAM_OUTPUT() {
         return IMAGE_STREAM_OUTPUT;
     }
 
-    public void setIMAGE_STREAM_OUTPUT(boolean value) {
+    public synchronized void setIMAGE_STREAM_OUTPUT(boolean value) {
         IMAGE_STREAM_OUTPUT = value;
     }
 
-    public String getSAGE_DIRECTORY() {
+    public synchronized String getSAGE_DIRECTORY() {
         return SAGE_DIRECTORY;
     }
 
-    public void setSAGE_DIRECTORY(String sAGE_DIRECTORY) {
+    public synchronized void setSAGE_DIRECTORY(String sAGE_DIRECTORY) {
         SAGE_DIRECTORY = sAGE_DIRECTORY;
     }
 
-    public boolean isIMAGE_STREAM_GL_ONLY() {
+    public synchronized boolean isIMAGE_STREAM_GL_ONLY() {
         return IMAGE_STREAM_GL_ONLY;
     }
 
-    public void setIMAGE_STREAM_GL_ONLY(boolean iMAGE_STREAM_GL_ONLY) {
+    public synchronized void setIMAGE_STREAM_GL_ONLY(boolean iMAGE_STREAM_GL_ONLY) {
         IMAGE_STREAM_GL_ONLY = iMAGE_STREAM_GL_ONLY;
     }
 
-    public float getHeightDistortion() {
+    public synchronized float getHeightDistortion() {
         return HEIGHT_DISTORION;
     }
 
-    public float getHeightDistortionMin() {
+    public synchronized float getHeightDistortionMin() {
         return HEIGHT_DISTORION_MIN;
     }
 
-    public float getHeightDistortionMax() {
+    public synchronized float getHeightDistortionMax() {
         return HEIGHT_DISTORION_MAX;
     }
 
-    public void setHeightDistortion(float value) {
+    public synchronized void setHeightDistortion(float value) {
         HEIGHT_DISTORION = value;
     }
 
-    public boolean isTouchConnected() {
+    public synchronized boolean isTouchConnected() {
         return TOUCH_CONNECTED;
     }
 
-    public String getFancyDate(int frameNumber) {
+    public synchronized String getFancyDate(int frameNumber) {
         String result = "Time: " + frameNumber;
 
         return result;
     }
 
-    public int getSageFramesPerSecond() {
+    public synchronized int getSageFramesPerSecond() {
         return SAGE_FRAMES_PER_SECOND;
     }
 
-    public int getTimestep() {
+    public synchronized int getTimestep() {
         return TIME_STEP_SIZE;
     }
 
-    public void setTimestep(int value) {
+    public synchronized void setTimestep(int value) {
         System.out.println("Timestep set to: " + value);
         TIME_STEP_SIZE = value;
     }
 
-    public boolean getStereo() {
+    public synchronized boolean getStereo() {
         return STEREO_RENDERING;
     }
 
-    public void setStereo(int stateChange) {
+    public synchronized void setStereo(int stateChange) {
         if (stateChange == 1)
             STEREO_RENDERING = true;
         if (stateChange == 2)
             STEREO_RENDERING = false;
     }
 
-    public boolean getStereoSwitched() {
+    public synchronized boolean getStereoSwitched() {
         return STEREO_SWITCHED;
     }
 
-    public void setStereoSwitched(int stateChange) {
+    public synchronized void setStereoSwitched(int stateChange) {
         if (stateChange == 1)
             STEREO_SWITCHED = true;
         if (stateChange == 2)
             STEREO_SWITCHED = false;
     }
 
-    public float getStereoOcularDistanceMin() {
+    public synchronized float getStereoOcularDistanceMin() {
         return STEREO_OCULAR_DISTANCE_MIN;
     }
 
-    public float getStereoOcularDistanceMax() {
+    public synchronized float getStereoOcularDistanceMax() {
         return STEREO_OCULAR_DISTANCE_MAX;
     }
 
-    public float getStereoOcularDistance() {
+    public synchronized float getStereoOcularDistance() {
         return STEREO_OCULAR_DISTANCE_DEF;
     }
 
-    public void setStereoOcularDistance(float value) {
+    public synchronized void setStereoOcularDistance(float value) {
         STEREO_OCULAR_DISTANCE_DEF = value;
     }
 
-    public int getDefaultScreenWidth() {
+    public synchronized int getDefaultScreenWidth() {
         return DEFAULT_SCREEN_WIDTH;
     }
 
-    public int getDefaultScreenHeight() {
+    public synchronized int getDefaultScreenHeight() {
         return DEFAULT_SCREEN_HEIGHT;
     }
 
-    public int getScreenshotScreenWidth() {
+    public synchronized int getScreenshotScreenWidth() {
         return SCREENSHOT_SCREEN_WIDTH;
     }
 
-    public int getScreenshotScreenHeight() {
+    public synchronized int getScreenshotScreenHeight() {
         return SCREENSHOT_SCREEN_HEIGHT;
     }
 
-    public int getMaxOctreeDepth() {
+    public synchronized int getMaxOctreeDepth() {
         return MAX_OCTREE_DEPTH;
     }
 
-    public float getOctreeEdges() {
+    public synchronized float getOctreeEdges() {
         return OCTREE_EDGES;
     }
 
-    public int getMaxExpectedModels() {
+    public synchronized int getMaxExpectedModels() {
         return MAX_EXPECTED_MODELS;
     }
 
-    public float getInitialRotationX() {
+    public synchronized float getInitialRotationX() {
         return INITIAL_ROTATION_X;
     }
 
-    public float getInitialRotationY() {
+    public synchronized float getInitialRotationY() {
         return INITIAL_ROTATION_Y;
     }
 
-    public float getInitialZoom() {
+    public synchronized float getInitialZoom() {
         return INITIAL_ZOOM;
     }
 
-    public void setMovieRotate(int stateChange) {
+    public synchronized void setMovieRotate(int stateChange) {
         if (stateChange == 1)
             MOVIE_ROTATE = true;
         if (stateChange == 2)
             MOVIE_ROTATE = false;
     }
 
-    public boolean getMovieRotate() {
+    public synchronized boolean getMovieRotate() {
         return MOVIE_ROTATE;
     }
 
-    public void setMovieRotationSpeed(float value) {
+    public synchronized void setMovieRotationSpeed(float value) {
         MOVIE_ROTATION_SPEED_DEF = value;
     }
 
-    public float getMovieRotationSpeedMin() {
+    public synchronized float getMovieRotationSpeedMin() {
         return MOVIE_ROTATION_SPEED_MIN;
     }
 
-    public float getMovieRotationSpeedMax() {
+    public synchronized float getMovieRotationSpeedMax() {
         return MOVIE_ROTATION_SPEED_MAX;
     }
 
-    public float getMovieRotationSpeedDef() {
+    public synchronized float getMovieRotationSpeedDef() {
         return MOVIE_ROTATION_SPEED_DEF;
     }
 
-    public int getInitialSimulationFrame() {
+    public synchronized int getInitialSimulationFrame() {
         return INITIAL_SIMULATION_FRAME;
     }
 
-    public void setInitial_simulation_frame(int initialSimulationFrame) {
+    public synchronized void setInitial_simulation_frame(int initialSimulationFrame) {
         INITIAL_SIMULATION_FRAME = initialSimulationFrame;
     }
 
-    public void setInitial_rotation_x(float initialRotationX) {
+    public synchronized void setInitial_rotation_x(float initialRotationX) {
         INITIAL_ROTATION_X = initialRotationX;
     }
 
-    public void setInitial_rotation_y(float initialRotationY) {
+    public synchronized void setInitial_rotation_y(float initialRotationY) {
         INITIAL_ROTATION_Y = initialRotationY;
     }
 
-    public String getScreenshotPath() {
+    public synchronized String getScreenshotPath() {
         return SCREENSHOT_PATH;
     }
 
-    public void setScreenshotPath(String newPath) {
+    public synchronized void setScreenshotPath(String newPath) {
         SCREENSHOT_PATH = newPath;
     }
 
-    public void setVariableRange(int screenNumber, String varName, int sliderLowerValue, int sliderUpperValue) {
+    public synchronized void setVariableRange(int screenNumber, String varName, int sliderLowerValue,
+            int sliderUpperValue) {
         float diff = getVarMax(varName) - getVarMin(varName);
 
         currentMinValues.put(varName, (sliderLowerValue / 100f) * diff + getVarMin(varName));
@@ -683,7 +685,7 @@ public class WaterCycleSettings {
         screenDescriptions[screenNumber] = result;
     }
 
-    public int getRangeSliderLowerValue(int screenNumber) {
+    public synchronized int getRangeSliderLowerValue(int screenNumber) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
 
         float min = getVarMin(state.getVarName());
@@ -696,7 +698,7 @@ public class WaterCycleSettings {
         return (int) (result * 100) - 1;
     }
 
-    public int getRangeSliderUpperValue(int screenNumber) {
+    public synchronized int getRangeSliderUpperValue(int screenNumber) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
 
         float min = getVarMin(state.getVarName());
@@ -709,38 +711,38 @@ public class WaterCycleSettings {
         return (int) (result * 100) - 1;
     }
 
-    public String getWidthSubstring() {
+    public synchronized String getWidthSubstring() {
         return grid_width_dimension_substring;
     }
 
-    public String getHeightSubstring() {
+    public synchronized String getHeightSubstring() {
         return grid_height_dimension_substring;
     }
 
-    public int getNumScreensRows() {
+    public synchronized int getNumScreensRows() {
         return number_of_screens_row;
     }
 
-    public int getNumScreensCols() {
+    public synchronized int getNumScreensCols() {
         return number_of_screens_col;
     }
 
-    public void setNumberOfScreens(int rows, int columns) {
+    public synchronized void setNumberOfScreens(int rows, int columns) {
         number_of_screens_row = rows;
         number_of_screens_col = columns;
 
         initializeScreenDescriptions();
     }
 
-    public int getInterfaceWidth() {
+    public synchronized int getInterfaceWidth() {
         return INTERFACE_WIDTH;
     }
 
-    public int getInterfaceHeight() {
+    public synchronized int getInterfaceHeight() {
         return INTERFACE_HEIGHT;
     }
 
-    public void initDefaultVariables(ArrayList<String> variables) {
+    public synchronized void initDefaultVariables(ArrayList<String> variables) {
         screenDescriptions = new SurfaceTextureDescription[number_of_screens_col * number_of_screens_row];
 
         if (variables.size() != 0) {
@@ -760,7 +762,7 @@ public class WaterCycleSettings {
         }
     }
 
-    public String getCurrentColormap(String key) {
+    public synchronized String getCurrentColormap(String key) {
         String colormap = "";
         if (currentColormap.containsKey(key)) {
             colormap = currentColormap.get(key);
@@ -775,7 +777,7 @@ public class WaterCycleSettings {
         return colormap;
     }
 
-    public float getVarMin(String key) {
+    public synchronized float getVarMin(String key) {
         float value;
         if (minValues.containsKey(key)) {
             value = minValues.get(key);
@@ -786,7 +788,7 @@ public class WaterCycleSettings {
         return value;
     }
 
-    public float getVarMax(String key) {
+    public synchronized float getVarMax(String key) {
         float value;
         if (maxValues.containsKey(key)) {
             value = maxValues.get(key);
@@ -797,7 +799,7 @@ public class WaterCycleSettings {
         return value;
     }
 
-    public float getCurrentVarDiffMin(String key) {
+    public synchronized float getCurrentVarDiffMin(String key) {
         float value;
         if (currentDiffMinValues.containsKey(key)) {
             value = currentDiffMinValues.get(key);
@@ -808,7 +810,7 @@ public class WaterCycleSettings {
         return value;
     }
 
-    public float getCurrentVarDiffMax(String key) {
+    public synchronized float getCurrentVarDiffMax(String key) {
         float value;
         if (currentDiffMaxValues.containsKey(key)) {
             value = currentDiffMaxValues.get(key);
@@ -819,7 +821,7 @@ public class WaterCycleSettings {
         return value;
     }
 
-    public float getCurrentVarMin(String key) {
+    public synchronized float getCurrentVarMin(String key) {
         float value;
         if (currentMinValues.containsKey(key)) {
             value = currentMinValues.get(key);
@@ -830,7 +832,7 @@ public class WaterCycleSettings {
         return value;
     }
 
-    public float getCurrentVarMax(String key) {
+    public synchronized float getCurrentVarMax(String key) {
         float value;
         if (currentMaxValues.containsKey(key)) {
             value = currentMaxValues.get(key);
@@ -841,18 +843,18 @@ public class WaterCycleSettings {
         return value;
     }
 
-    public void setVarMin(String key, float currentMin) {
+    public synchronized void setVarMin(String key, float currentMin) {
         minValues.put(key, currentMin);
         currentMinValues.put(key, currentMin);
     }
 
-    public void setVarMax(String key, float currentMax) {
+    public synchronized void setVarMax(String key, float currentMax) {
         maxValues.put(key, currentMax);
         currentMaxValues.put(key, currentMax);
 
     }
 
-    public void setLogScale(int screenNumber, boolean selected) {
+    public synchronized void setLogScale(int screenNumber, boolean selected) {
         SurfaceTextureDescription state = screenDescriptions[screenNumber];
         SurfaceTextureDescription result = new SurfaceTextureDescription(state.getFrameNumber(), state.getDepth(),
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
@@ -860,7 +862,15 @@ public class WaterCycleSettings {
         screenDescriptions[screenNumber] = result;
     }
 
-    public void setCacheFileManager(CacheFileManager cacheFileManager) {
+    public synchronized void setCacheFileManager(CacheFileManager cacheFileManager) {
         this.cacheFileManager = cacheFileManager;
+    }
+
+    public synchronized boolean isRequestedNewConfiguration() {
+        return requestedNewConfiguration;
+    }
+
+    public synchronized void setRequestedNewConfiguration(boolean requestedNewConfiguration) {
+        this.requestedNewConfiguration = requestedNewConfiguration;
     }
 }
