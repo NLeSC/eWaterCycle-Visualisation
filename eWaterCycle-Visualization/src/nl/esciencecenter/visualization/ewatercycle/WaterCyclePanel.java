@@ -689,9 +689,8 @@ public class WaterCyclePanel extends NeonInterfacePanel {
             validate();
             repaint();
 
-            final String path = files[0].getParent() + "screenshots/";
-
-            settings.setScreenshotPath(path);
+            // final String path = files[0].getParent() + "screenshots";
+            // settings.setScreenshotPath(path);
 
             new Thread(timer).start();
         } else {
