@@ -66,7 +66,7 @@ public class WaterCycleSettings {
     // can be found if necessary
     private int MAX_EXPECTED_MODELS = 1000;
 
-    protected String SCREENSHOT_PATH = System.getProperty("user.dir") + System.getProperty("path.separator");
+    protected String SCREENSHOT_PATH = System.getProperty("user.dir") + "/";
 
     private long WAITTIME_FOR_RETRY = 10000;
     private long WAITTIME_FOR_MOVIE = 1000;
@@ -121,6 +121,8 @@ public class WaterCycleSettings {
 
     private CacheFileManager cacheFileManager;
     private boolean requestedNewConfiguration;
+
+    private int numberOfScreenshotsPerTimeStep = 6;
 
     private WaterCycleSettings() {
         super();
@@ -180,7 +182,7 @@ public class WaterCycleSettings {
             // can be found if necessary
             MAX_EXPECTED_MODELS = props.getIntProperty("MAX_EXPECTED_MODELS");
 
-            SCREENSHOT_PATH = props.getProperty("SCREENSHOT_PATH");
+            // SCREENSHOT_PATH = props.getProperty("SCREENSHOT_PATH");
 
             WAITTIME_FOR_RETRY = props.getLongProperty("WAITTIME_FOR_RETRY");
             WAITTIME_FOR_MOVIE = props.getLongProperty("WAITTIME_FOR_MOVIE");
@@ -291,6 +293,16 @@ public class WaterCycleSettings {
             currentDiffMinValues.put("temperature", props.getFloatProperty("SET_DIFF_MIN_temperature"));
             currentDiffMaxValues.put("temperature", props.getFloatProperty("SET_DIFF_MAX_temperature"));
             currentColormap.put("temperature", "realistic");
+
+            minValues.put("runoff", props.getFloatProperty("MIN_runoff"));
+            maxValues.put("runoff", props.getFloatProperty("MAX_runoff"));
+            currentMinValues.put("runoff", props.getFloatProperty("SET_MIN_runoff"));
+            currentMaxValues.put("runoff", props.getFloatProperty("SET_MAX_runoff"));
+            diffMinValues.put("runoff", props.getFloatProperty("DIFF_MIN_runoff"));
+            diffMaxValues.put("runoff", props.getFloatProperty("DIFF_MAX_runoff"));
+            currentDiffMinValues.put("runoff", props.getFloatProperty("SET_DIFF_MIN_runoff"));
+            currentDiffMaxValues.put("runoff", props.getFloatProperty("SET_DIFF_MAX_runoff"));
+            currentColormap.put("runoff", "hotres");
 
             minValues.put("runoff", props.getFloatProperty("MIN_runoff"));
             maxValues.put("runoff", props.getFloatProperty("MAX_runoff"));
@@ -522,7 +534,7 @@ public class WaterCycleSettings {
     }
 
     public synchronized String getFancyDate(int frameNumber) {
-        String result = "Time: " + frameNumber;
+        String result = "Month: " + frameNumber;
 
         return result;
     }
@@ -876,5 +888,13 @@ public class WaterCycleSettings {
 
     public synchronized void setRequestedNewConfiguration(boolean requestedNewConfiguration) {
         this.requestedNewConfiguration = requestedNewConfiguration;
+    }
+
+    public int getNumberOfScreenshotsPerTimeStep() {
+        return numberOfScreenshotsPerTimeStep;
+    }
+
+    public void setNumberOfScreenshotsPerTimeStep(int numberOfScreenshotsPerTimeStep) {
+        this.numberOfScreenshotsPerTimeStep = numberOfScreenshotsPerTimeStep;
     }
 }

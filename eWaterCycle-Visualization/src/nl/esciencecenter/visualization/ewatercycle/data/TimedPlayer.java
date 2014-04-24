@@ -99,6 +99,8 @@ public class TimedPlayer implements Runnable {
     private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
     private final ArrayList<Integer> bezierSteps;
 
+    private int numberOfFramesPassedBetweenTimesteps = 0;
+
     public TimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
         this.frameCounter = frameCounter;
@@ -259,7 +261,7 @@ public class TimedPlayer implements Runnable {
         stop();
 
         while (running) {
-            setScreenshotFileName(frameNumber + ".png");
+            // setScreenshotFileName(frameNumber + ".png");
 
             if ((currentState == states.PLAYING) || (currentState == states.REDRAWING)
                     || (currentState == states.MOVIEMAKING) || (currentState == states.REVIEW)) {
@@ -268,32 +270,45 @@ public class TimedPlayer implements Runnable {
                     startTime = System.currentTimeMillis();
 
                     if (currentState == states.MOVIEMAKING || currentState == states.REVIEW) {
-                        for (Orientation o : orientationList) {
-                            if (o.getFrameNumber() == frameNumber) {
-                                Float3Vector rotation = new Float3Vector(o.getRotation());
-                                float viewDist = o.getViewDist();
-                                inputHandler.setRotation(rotation);
-                                inputHandler.setViewDist(viewDist);
+                        if (!isScreenshotNeeded()
+                                && numberOfFramesPassedBetweenTimesteps != settings.getNumberOfScreenshotsPerTimeStep()) {
+                            int movieFrameNumber = (frameNumber * settings.getNumberOfScreenshotsPerTimeStep())
+                                    + numberOfFramesPassedBetweenTimesteps;
+                            for (Orientation o : orientationList) {
+                                if (o.getFrameNumber() == movieFrameNumber) {
+                                    Float3Vector rotation = new Float3Vector(o.getRotation());
+                                    float viewDist = o.getViewDist();
+                                    inputHandler.setRotation(rotation);
+                                    inputHandler.setViewDist(viewDist);
 
+                                }
                             }
                             if (currentState == states.MOVIEMAKING) {
-                                setScreenshotFileName(frameNumber + ".png");
-                                setScreenshotNeeded(true);
+                                String ssFileName = String.format("%06d.png", movieFrameNumber);
+                                System.out.println("Writing screenshot: " + ssFileName);
+                                // setScreenshotFileName(ssFileName);
+                                // setScreenshotNeeded(true);
+                                makeScreenShot(ssFileName);
                             }
                         }
+
+                        numberOfFramesPassedBetweenTimesteps++;
                     }
 
                     // Forward frame
                     if (currentState != states.REDRAWING) {
                         int newFrameNumber;
                         try {
-                            if (effTexStorage.doneWithLastRequest()) {
-                                logger.debug("Done with last request");
-                                newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
+                            if (numberOfFramesPassedBetweenTimesteps == settings.getNumberOfScreenshotsPerTimeStep()) {
+                                if (effTexStorage.doneWithLastRequest()) {
+                                    logger.debug("Done with last request");
+                                    newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
 
-                                updateFrame(newFrameNumber, false);
-                            } else {
-                                logger.debug("Not done with last request");
+                                    updateFrame(newFrameNumber, false);
+                                } else {
+                                    logger.debug("Not done with last request");
+                                }
+                                numberOfFramesPassedBetweenTimesteps = 0;
                             }
                         } catch (IOException e) {
                             currentState = states.WAITINGONFRAME;
@@ -411,7 +426,10 @@ public class TimedPlayer implements Runnable {
         try {
             int currentFrameNumber = startKeyFrameNumber;
             while (currentFrameNumber <= finalKeyFrameNumber) {
-                intermediateFrameNumbers.add(currentFrameNumber);
+                for (int i = 0; i < settings.getNumberOfScreenshotsPerTimeStep(); i++) {
+                    intermediateFrameNumbers.add((currentFrameNumber * settings.getNumberOfScreenshotsPerTimeStep())
+                            + i);
+                }
                 currentFrameNumber = dsManager.getNextFrameNumber(currentFrameNumber);
             }
         } catch (IOException e) {
@@ -425,8 +443,8 @@ public class TimedPlayer implements Runnable {
                 KeyFrame currentKeyFrame = keyFrames.get(i);
                 KeyFrame nextKeyFrame = keyFrames.get(i + 1);
 
-                int startFrameNumber = currentKeyFrame.getFrameNumber();
-                int stopFrameNumber = nextKeyFrame.getFrameNumber();
+                int startFrameNumber = currentKeyFrame.getFrameNumber() * settings.getNumberOfScreenshotsPerTimeStep();
+                int stopFrameNumber = nextKeyFrame.getFrameNumber() * settings.getNumberOfScreenshotsPerTimeStep();
                 int numberOfInterpolationFrames = 0;
                 for (int currentFrameNumber : intermediateFrameNumbers) {
                     if (currentFrameNumber >= startFrameNumber && currentFrameNumber < stopFrameNumber) {
@@ -434,26 +452,25 @@ public class TimedPlayer implements Runnable {
                     }
                 }
 
-                Float4Vector startLocation = new Float4Vector(currentKeyFrame.getRotation(), 1f);
-                Float4Vector endLocation = new Float4Vector(nextKeyFrame.getRotation(), 1f);
+                Float3Vector startLocation = currentKeyFrame.getRotation();
+                Float3Vector endLocation = nextKeyFrame.getRotation();
 
                 Float3Vector startControl = new Float3Vector();
                 Float3Vector endControl = new Float3Vector();
 
-                Float4Vector[] curveSteps = FloatVectorMath.bezierCurve(numberOfInterpolationFrames, startLocation,
-                        startControl, endControl, endLocation);
+                Float3Vector[] curveSteps = FloatVectorMath.degreesBezierCurve(numberOfInterpolationFrames,
+                        startLocation, startControl, endControl, endLocation);
 
                 // Patch for zoom
-                startLocation = new Float4Vector(currentKeyFrame.getViewDist(), 0f, 0f, 1f);
-                endLocation = new Float4Vector(nextKeyFrame.getViewDist(), 0f, 0f, 1f);
+                Float4Vector startZoom = new Float4Vector(currentKeyFrame.getViewDist(), 0f, 0f, 1f);
+                Float4Vector endZoom = new Float4Vector(nextKeyFrame.getViewDist(), 0f, 0f, 1f);
 
-                Float4Vector[] zoomSteps = FloatVectorMath.bezierCurve(numberOfInterpolationFrames, startLocation,
-                        startControl, endControl, endLocation);
+                Float4Vector[] zoomSteps = FloatVectorMath.bezierCurve(numberOfInterpolationFrames, startZoom,
+                        startControl, endControl, endZoom);
 
                 for (int j = 0; j < numberOfInterpolationFrames; j++) {
                     int currentFrameNumber = intermediateFrameNumbers.get(currentKeyFrame.getFrameNumber() + j);
-                    Orientation newOrientation = new Orientation(currentFrameNumber, curveSteps[j].stripAlpha(),
-                            zoomSteps[j].getX());
+                    Orientation newOrientation = new Orientation(currentFrameNumber, curveSteps[j], zoomSteps[j].getX());
                     orientationList.add(newOrientation);
                 }
             }
