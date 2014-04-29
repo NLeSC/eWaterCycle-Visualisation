@@ -39,6 +39,8 @@ public class DatasetManager {
 
     private class Worker implements Runnable {
         private final SurfaceTextureDescription desc;
+        private long stopTimeMillis;
+        private long startTimeMillis;
 
         public Worker(SurfaceTextureDescription desc) {
             this.desc = desc;
@@ -46,6 +48,12 @@ public class DatasetManager {
 
         @Override
         public void run() {
+            startTimeMillis = System.currentTimeMillis();
+            stopTimeMillis = System.currentTimeMillis();
+
+            // logger.debug("--- Timing start for job : " + desc);
+
+            startTimeMillis = System.currentTimeMillis();
             int frameNumber = desc.getFrameNumber();
             String varName = desc.getVarName();
 
@@ -64,9 +72,21 @@ public class DatasetManager {
             while (surfaceArray == null) {
                 surfaceArray = currentReader.getData(varName, frameNumber);
             }
+            stopTimeMillis = System.currentTimeMillis();
+
+            logger.debug("Read: " + ((long) surfaceArray.length * (Float.SIZE / 8)) + " bytes, in "
+                    + ((stopTimeMillis - startTimeMillis) / 1000.0) + " sec.");
+
+            startTimeMillis = System.currentTimeMillis();
 
             int[] pixelArray = mapper.getImage(desc.getColorMap(), colormapDims, surfaceArray,
                     currentReader.getFillValue(variableName));
+            stopTimeMillis = System.currentTimeMillis();
+
+            logger.debug("JOCL pixel generation: " + ((long) surfaceArray.length * (Float.SIZE / 8)) + " bytes, in "
+                    + ((stopTimeMillis - startTimeMillis) / 1000.0) + " sec.");
+
+            startTimeMillis = System.currentTimeMillis();
 
             int height = 500;
             int width = 1;
