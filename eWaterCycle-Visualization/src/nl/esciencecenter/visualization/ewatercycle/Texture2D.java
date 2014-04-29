@@ -78,7 +78,8 @@ public abstract class Texture2D extends Texture {
             gl.glPixelStorei(GL3.GL_UNPACK_ALIGNMENT, 1);
 
             gl.glTexStorage2D(GL3.GL_TEXTURE_2D, num_mipmaps, GL3.GL_RGB16, width, height);
-            gl.glTexSubImage2D(GL3.GL_TEXTURE_2D, 0, 0, 0, width, height, GL3.GL_RGB, GL3.GL_UNSIGNED_BYTE, pixelBuffer);
+            gl.glTexSubImage2D(GL3.GL_TEXTURE_2D, 0, 0, 0, width, height, GL3.GL_RGBA, GL3.GL_UNSIGNED_BYTE,
+                    pixelBuffer);
             gl.glGenerateMipmap(GL3.GL_TEXTURE_2D);
 
             // Wrap.

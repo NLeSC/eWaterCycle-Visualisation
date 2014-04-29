@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.esciencecenter.visualization.ewatercycle.ByteBufferTexture;
+import nl.esciencecenter.visualization.ewatercycle.IntArrayTexture;
 import nl.esciencecenter.visualization.ewatercycle.Texture2D;
 
 import org.slf4j.Logger;
@@ -197,6 +198,24 @@ public class EfficientTextureStorage {
 
         if (!failure) {
             storage.add(new TextureCombo(desc, new ByteBufferTexture(surfaceMultiTexUnit, surfaceData, width, height),
+                    new ByteBufferTexture(legendMultiTexUnit, legendData, LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT)));
+        } else {
+            logger.error("FAILURE in setImageCombo, " + desc);
+        }
+    }
+
+    public synchronized void setImageCombo(SurfaceTextureDescription desc, int[] surfaceData, ByteBuffer legendData) {
+        boolean failure = true;
+
+        // Only add this surface texture if it is still needed.
+        for (int i = 0; i < newScreenA.length; i++) {
+            if (newScreenA[i] == desc) {
+                failure = false;
+            }
+        }
+
+        if (!failure) {
+            storage.add(new TextureCombo(desc, new IntArrayTexture(surfaceMultiTexUnit, surfaceData, width, height),
                     new ByteBufferTexture(legendMultiTexUnit, legendData, LEGEND_TEXTURE_WIDTH, LEGEND_TEXTURE_HEIGHT)));
         } else {
             logger.error("FAILURE in setImageCombo, " + desc);

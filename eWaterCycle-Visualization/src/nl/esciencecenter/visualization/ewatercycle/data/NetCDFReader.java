@@ -218,6 +218,27 @@ public class NetCDFReader {
         return result;
     }
 
+    public synchronized float[] getData(String variableName, int time) {
+        Variable variable = variables.get(variableName);
+        int lats = shapes.get(variableName).get(1);
+        int lons = shapes.get(variableName).get(2);
+
+        logger.debug("creating image size: " + lats + "x" + lons);
+
+        float[] data = null;
+
+        startTimeMillis = System.currentTimeMillis();
+        Array netCDFArray;
+        try {
+            netCDFArray = variable.slice(0, time).read();
+            data = (float[]) netCDFArray.get1DJavaArray(float.class);
+        } catch (IOException | InvalidRangeException e) {
+            e.printStackTrace();
+        }
+
+        return data;
+    }
+
     public void determineMinMax(String variableName) {
         // Check the settings first to see if this value was predefined.
         float settingsMin = settings.getVarMin(variableName);
@@ -345,5 +366,9 @@ public class NetCDFReader {
         } catch (IOException ioe) {
             logger.error("trying to close " + ncfile.toString(), ioe);
         }
+    }
+
+    public float getFillValue(String variableName) {
+        return fillValues.get(variableName);
     }
 }

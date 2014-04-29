@@ -14,6 +14,7 @@ import javax.media.opengl.GL3;
 import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
+import nl.esciencecenter.visualization.ewatercycle.JOCLColormapper;
 import nl.esciencecenter.visualization.ewatercycle.WaterCycleSettings;
 
 import org.slf4j.Logger;
@@ -30,7 +31,9 @@ public class DatasetManager {
     private int latArraySize;
     private int lonArraySize;
 
-    ExecutorService executor;
+    private final ExecutorService executor;
+
+    private final JOCLColormapper mapper;
 
     // private final List<SurfaceTextureDescription> queue;
 
@@ -51,12 +54,19 @@ public class DatasetManager {
             if (frameNumber < 0 || frameNumber > currentReader.getAvailableFrames(varName)) {
                 logger.debug("buildImages : Requested frameNumber  " + frameNumber + " out of range.");
             }
-
-            ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(), varName, frameNumber,
-                    desc.isLogScale());
+            String variableName = desc.getVarName();
+            // ByteBuffer surfaceBuffer = currentReader.getData(varName,
+            // frameNumber);
 
             Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
                     settings.getCurrentVarMax(varName));
+            float[] surfaceArray = null;
+            while (surfaceArray == null) {
+                surfaceArray = currentReader.getData(varName, frameNumber);
+            }
+
+            int[] pixelArray = mapper.getImage(desc.getColorMap(), colormapDims, surfaceArray,
+                    currentReader.getFillValue(variableName));
 
             int height = 500;
             int width = 1;
@@ -72,12 +82,13 @@ public class DatasetManager {
                     legendBuf.put((byte) (255 * c.getRed()));
                     legendBuf.put((byte) (255 * c.getGreen()));
                     legendBuf.put((byte) (255 * c.getBlue()));
+                    legendBuf.put((byte) (255));
                 }
             }
 
             legendBuf.flip();
 
-            effTexStorage.setImageCombo(desc, surfaceBuffer, legendBuf);
+            effTexStorage.setImageCombo(desc, pixelArray, legendBuf);
         }
 
     }
@@ -87,6 +98,8 @@ public class DatasetManager {
         executor = Executors.newFixedThreadPool(4);
 
         init(files);
+
+        mapper = new JOCLColormapper(getImageWidth(), getImageHeight());
     }
 
     public synchronized void shutdown() {

@@ -96,55 +96,12 @@ public class TimedPlayer implements Runnable {
 
     private final long waittime = settings.getWaittimeMovie();
 
-    private final ArrayList<Float3Vector> bezierPoints, fixedPoints;
-    private final ArrayList<Integer> bezierSteps;
-
     private int numberOfFramesPassedBetweenTimesteps = 0;
 
     public TimedPlayer(CustomJSlider timeBar2, JFormattedTextField frameCounter) {
         this.timeBar = timeBar2;
         this.frameCounter = frameCounter;
         this.inputHandler = WaterCycleInputHandler.getInstance();
-
-        bezierPoints = new ArrayList<Float3Vector>();
-
-        fixedPoints = new ArrayList<Float3Vector>();
-        bezierSteps = new ArrayList<Integer>();
-
-        fixedPoints.add(new Float3Vector(394, 624, -80)); // Europa
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(379, 702, -140)); // Gulf Stream
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(359, 651, -140)); // Equator
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(320, 599, -90)); // South Africa
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(339, 540, -140)); // India
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(382, 487, -80)); // Japan
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(353, 360, -110)); // Panama
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(311, 326, -110)); // Argentina
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(412, 302, -140)); // Greenland
-        bezierSteps.add(60);
-        fixedPoints.add(new Float3Vector(394, 264, -80)); // Europa
-
-        Float3Vector lastPoint = fixedPoints.get(0);
-        Float3Vector still = new Float3Vector(0, 0, 0);
-        for (int i = 1; i < fixedPoints.size(); i++) {
-            Float3Vector newPoint = fixedPoints.get(i);
-
-            Float3Vector[] bezierPointsTemp = FloatVectorMath.degreesBezierCurve(bezierSteps.get(i - 1), lastPoint,
-                    still, still, newPoint);
-
-            for (int j = 1; j < bezierPointsTemp.length; j++) {
-                bezierPoints.add(bezierPointsTemp[j]);
-            }
-
-            lastPoint = newPoint;
-        }
     }
 
     public void close() {
@@ -276,7 +233,8 @@ public class TimedPlayer implements Runnable {
                                     + numberOfFramesPassedBetweenTimesteps;
                             for (Orientation o : orientationList) {
                                 if (o.getFrameNumber() == movieFrameNumber) {
-                                    Float3Vector rotation = new Float3Vector(o.getRotation());
+                                    Float3Vector rotation = new Float3Vector(o.getRotation().getX(), o.getRotation()
+                                            .getY(), 0f);
                                     float viewDist = o.getViewDist();
                                     inputHandler.setRotation(rotation);
                                     inputHandler.setViewDist(viewDist);
@@ -452,27 +410,49 @@ public class TimedPlayer implements Runnable {
                     }
                 }
 
-                Float3Vector startLocation = currentKeyFrame.getRotation();
-                Float3Vector endLocation = nextKeyFrame.getRotation();
+                Float3Vector startLocation = new Float3Vector(currentKeyFrame.getRotation().getX(), currentKeyFrame
+                        .getRotation().getY(), currentKeyFrame.getViewDist());
+                Float3Vector endLocation = new Float3Vector(nextKeyFrame.getRotation().getX(), nextKeyFrame
+                        .getRotation().getY(), nextKeyFrame.getViewDist());
 
-                Float3Vector startControl = new Float3Vector();
-                Float3Vector endControl = new Float3Vector();
+                if (startLocation.getX() - endLocation.getX() < 0f) {
+                    startLocation.setX(startLocation.getX() + 360f);
+                }
+
+                if (startLocation.getY() - endLocation.getY() < 0f) {
+                    startLocation.setY(startLocation.getY() + 360f);
+                }
+
+                Float3Vector still = new Float3Vector();
 
                 Float3Vector[] curveSteps = FloatVectorMath.degreesBezierCurve(numberOfInterpolationFrames,
-                        startLocation, startControl, endControl, endLocation);
+                        startLocation, still, still, endLocation);
 
                 // Patch for zoom
-                Float4Vector startZoom = new Float4Vector(currentKeyFrame.getViewDist(), 0f, 0f, 1f);
-                Float4Vector endZoom = new Float4Vector(nextKeyFrame.getViewDist(), 0f, 0f, 1f);
+                // Float4Vector startZoom = new
+                // Float4Vector(currentKeyFrame.getViewDist(), 0f, 0f, 1f);
+                // Float4Vector endZoom = new
+                // Float4Vector(nextKeyFrame.getViewDist(), 0f, 0f, 1f);
+                //
+                // Float4Vector[] zoomSteps =
+                // FloatVectorMath.bezierCurve(numberOfInterpolationFrames,
+                // startZoom,
+                // still, endControl, endZoom);
 
-                Float4Vector[] zoomSteps = FloatVectorMath.bezierCurve(numberOfInterpolationFrames, startZoom,
-                        startControl, endControl, endZoom);
+                System.out.println("O : "
+                        + new Float4Vector(currentKeyFrame.getRotation(), currentKeyFrame.getViewDist()));
 
                 for (int j = 0; j < numberOfInterpolationFrames; j++) {
                     int currentFrameNumber = intermediateFrameNumbers.get(currentKeyFrame.getFrameNumber() + j);
-                    Orientation newOrientation = new Orientation(currentFrameNumber, curveSteps[j], zoomSteps[j].getX());
+                    Orientation newOrientation = new Orientation(currentFrameNumber, curveSteps[j],
+                            curveSteps[j].getZ());
                     orientationList.add(newOrientation);
+
+                    System.out.println("S+" + j + ": " + new Float4Vector(curveSteps[j], curveSteps[j].getX()));
                 }
+
+                System.out.println("D : " + new Float4Vector(nextKeyFrame.getRotation(), nextKeyFrame.getViewDist()));
+
             }
         }
 

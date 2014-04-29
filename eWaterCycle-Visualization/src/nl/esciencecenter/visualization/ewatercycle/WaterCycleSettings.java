@@ -410,6 +410,7 @@ public class WaterCycleSettings {
                     currentState.isDiff(), currentState.isSecondSet(), currentState.getLowerBound(),
                     currentState.getUpperBound(), currentState.isLogScale());
         }
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized void setDepth(int value) {
@@ -422,6 +423,7 @@ public class WaterCycleSettings {
         }
 
         DEPTH_DEF = value;
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized int getDepthMax() {
@@ -462,6 +464,7 @@ public class WaterCycleSettings {
                 state.getColorMap(), dynamic, diff, secondSet, state.getLowerBound(), state.getUpperBound(),
                 state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized void setVariable(int screenNumber, String variable) {
@@ -470,6 +473,7 @@ public class WaterCycleSettings {
                 variable, getCurrentColormap(variable), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized SurfaceTextureDescription getSurfaceDescription(int screenNumber) {
@@ -487,6 +491,7 @@ public class WaterCycleSettings {
         if (cacheFileManager != null) {
             cacheFileManager.writeColormap(state.getVarName(), selectedColorMap);
         }
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized boolean isIMAGE_STREAM_OUTPUT() {
@@ -695,6 +700,7 @@ public class WaterCycleSettings {
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), minFloatValue, maxFloatValue, state.isLogScale());
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized int getRangeSliderLowerValue(int screenNumber) {
@@ -858,11 +864,13 @@ public class WaterCycleSettings {
     public synchronized void setVarMin(String key, float currentMin) {
         minValues.put(key, currentMin);
         currentMinValues.put(key, currentMin);
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized void setVarMax(String key, float currentMax) {
         maxValues.put(key, currentMax);
         currentMaxValues.put(key, currentMax);
+        setRequestedNewConfiguration(true);
 
     }
 
@@ -872,6 +880,7 @@ public class WaterCycleSettings {
                 state.getVarName(), state.getColorMap(), state.isDynamicDimensions(), state.isDiff(),
                 state.isSecondSet(), state.getLowerBound(), state.getUpperBound(), selected);
         screenDescriptions[screenNumber] = result;
+        setRequestedNewConfiguration(true);
     }
 
     public synchronized void setCacheFileManager(CacheFileManager cacheFileManager) {

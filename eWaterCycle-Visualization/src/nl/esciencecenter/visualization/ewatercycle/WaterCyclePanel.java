@@ -703,7 +703,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
     }
 
     private File[] openFile() {
-        final JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
+        final JFileChooser fileChooser = new JFileChooser("/media/maarten/diskhdd2/eWaterCycle2/"); // System.getProperty("user.dir"));
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);

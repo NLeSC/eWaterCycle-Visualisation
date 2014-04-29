@@ -105,6 +105,7 @@ public class WaterCycleWindow implements GLEventListener {
     final Float4Vector up = new Float4Vector(0.0f, 1.0f, 0.0f, 0.0f);
 
     private final boolean requestedNewConfiguration = false;
+    private JOCLColormapper mapper;
 
     public WaterCycleWindow(WaterCycleInputHandler inputHandler) {
         this.loader = new ShaderProgramLoader();
@@ -428,8 +429,6 @@ public class WaterCycleWindow implements GLEventListener {
                             dataSets[i].setString(gl, currentDesc.verbalizeDataMode(), Color4.WHITE, fontSize);
                             legendTextsMin[i].setString(gl, min, Color4.WHITE, fontSize);
                             legendTextsMax[i].setString(gl, max, Color4.WHITE, fontSize);
-                        } else {
-                            logger.error("Not a new request ??? " + currentDesc);
                         }
                     }
                 }
@@ -796,6 +795,8 @@ public class WaterCycleWindow implements GLEventListener {
         finalPBO.delete(gl);
         finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
         finalPBO.init(gl);
+
+        // mapper.reshape(canvasWidth, canvasHeight);
 
         reshaped = true;
     }
