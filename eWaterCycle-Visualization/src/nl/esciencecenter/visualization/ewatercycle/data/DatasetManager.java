@@ -11,8 +11,6 @@ import java.util.concurrent.Executors;
 
 import javax.media.opengl.GL3;
 
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
-import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.ewatercycle.JOCLColormapper;
 import nl.esciencecenter.visualization.ewatercycle.WaterCycleSettings;
@@ -79,7 +77,7 @@ public class DatasetManager {
 
             startTimeMillis = System.currentTimeMillis();
 
-            int[] pixelArray = mapper.getImage(desc.getColorMap(), colormapDims, surfaceArray,
+            int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
                     currentReader.getFillValue(variableName));
             stopTimeMillis = System.currentTimeMillis();
 
@@ -88,25 +86,31 @@ public class DatasetManager {
 
             startTimeMillis = System.currentTimeMillis();
 
-            int height = 500;
-            int width = 1;
-            ByteBuffer legendBuf = ByteBuffer.allocate(height * width * 4);
-
-            for (int row = height - 1; row >= 0; row--) {
-                float index = row / (float) height;
-                float var = (index * colormapDims.getDiff()) + colormapDims.getMin();
-
-                Color c = ColormapInterpreter.getColor(desc.getColorMap(), colormapDims, var);
-
-                for (int col = 0; col < width; col++) {
-                    legendBuf.put((byte) (255 * c.getRed()));
-                    legendBuf.put((byte) (255 * c.getGreen()));
-                    legendBuf.put((byte) (255 * c.getBlue()));
-                    legendBuf.put((byte) (255));
-                }
-            }
-
-            legendBuf.flip();
+            // int height = 500;
+            // int width = 1;
+            ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());// ByteBuffer.allocate(height
+                                                                                          // *
+                                                                                          // width
+                                                                                          // *
+                                                                                          // 4);
+            //
+            // for (int row = height - 1; row >= 0; row--) {
+            // float index = row / (float) height;
+            // float var = (index * colormapDims.getDiff()) +
+            // colormapDims.getMin();
+            //
+            // Color c = ColormapInterpreter.getColor(desc.getColorMap(),
+            // colormapDims, var);
+            //
+            // for (int col = 0; col < width; col++) {
+            // legendBuf.put((byte) (255 * c.getRed()));
+            // legendBuf.put((byte) (255 * c.getGreen()));
+            // legendBuf.put((byte) (255 * c.getBlue()));
+            // legendBuf.put((byte) (255));
+            // }
+            // }
+            //
+            // legendBuf.flip();
 
             effTexStorage.setImageCombo(desc, pixelArray, legendBuf);
         }

@@ -1,11 +1,5 @@
 package nl.esciencecenter.visualization.ewatercycle;
 
-/*
- * JOCL - Java bindings for OpenCL
- * 
- * Copyright 2009 Marco Hutter - http://www.jocl.org/
- */
-
 import static org.jocl.CL.CL_CONTEXT_PLATFORM;
 import static org.jocl.CL.CL_DEVICE_TYPE_ALL;
 import static org.jocl.CL.CL_MEM_READ_WRITE;
@@ -25,6 +19,9 @@ import static org.jocl.CL.clGetPlatformIDs;
 import static org.jocl.CL.clSetKernelArg;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,11 +29,18 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.swing.ImageIcon;
+import javax.swing.JComboBox;
 
 import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
+import nl.esciencecenter.neon.swing.ImageComboBoxRenderer;
+import nl.esciencecenter.neon.swing.SimpleImageIcon;
 
 import org.jocl.CL;
 import org.jocl.Pointer;
@@ -52,9 +56,10 @@ import org.jocl.cl_program;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jogamp.common.nio.Buffers;
+
 /**
- * A class that uses a simple OpenCL kernel to compute the Mandelbrot set and
- * displays it in an image
+ * A class that uses a simple OpenCL kernel to compute a colormapped image
  */
 public class JOCLColormapper {
     private final static Logger logger = LoggerFactory.getLogger(JOCLColormapper.class);
@@ -88,11 +93,6 @@ public class JOCLColormapper {
     private static Map<String, int[]> colorMaps;
 
     /**
-     * The image which will contain the Mandelbrot pixel data
-     */
-    // private final BufferedImage image;
-
-    /**
      * The width of the image
      */
     private int width = 0;
@@ -113,8 +113,8 @@ public class JOCLColormapper {
     private cl_command_queue commandQueue;
 
     /**
-     * The OpenCL kernel which will actually compute the Mandelbrot set and
-     * store the pixel data in a CL memory object
+     * The OpenCL kernel which will actually compute the Colormap and store the
+     * pixel data in a CL memory object
      */
     private cl_kernel kernel;
 
@@ -124,7 +124,7 @@ public class JOCLColormapper {
     private cl_mem outputMem;
 
     /**
-     * The OpenCL memory object which stores the pixel data
+     * The OpenCL memory object which stores the raw data
      */
     private cl_mem dataMem;
 
@@ -134,30 +134,29 @@ public class JOCLColormapper {
      */
     private cl_mem colorMapMem;
 
-    //
-    // /**
-    // * The color map which will be copied to OpenCL for filling the PBO.
-    // */
-    // private int colorMap[];
-    //
-    // private int colormapLength;
+    static {
+        // Create and fill the memory object containing the color maps
+        rebuildMaps();
+    }
 
     /**
-     * Creates the JOCLSimpleMandelbrot sample with the given width and height
+     * Creates the JOCLColormapper with the given width and height
      */
     public JOCLColormapper(int width, int height) {
         this.width = width;
         this.height = height;
 
-        // Create the image and the component that will paint the image
-        // image = new BufferedImage(sizeX, sizeY, BufferedImage.TYPE_INT_RGB);
-
         // Initialize OpenCL
         initCL(width, height);
-
-        // Initial image update
-        // updateImage();
     }
+
+    /** Storage for the statically built legend images. */
+    private static Map<String, Color[][]> legends;
+    private static Map<String, ByteBuffer> legendByteBuffers;
+
+    private final static int LEGEND_WIDTH = 150;
+    private final static int LEGEND_HEIGHT = 150;
+    private final static int COLORMAP_FINAL_ENTRIES = 500;
 
     /**
      * Initialize OpenCL: Create the context, the command queue and the kernel.
@@ -211,19 +210,16 @@ public class JOCLColormapper {
 
         // Create the kernel
         kernel = clCreateKernel(cpProgram, "mapColors", null);
-
-        // Create and fill the memory object containing the color maps
-        rebuildMaps();
     }
 
     /**
      * Rebuilds (and re-reads) the storage of colormaps. Outputs succesfully
      * read colormap names to the command line.
      */
-    private int rebuildMaps() {
-        int entries = 0;
+    private static void rebuildMaps() {
         colorMaps = new HashMap<String, int[]>();
-
+        legends = new HashMap<String, Color[][]>();
+        legendByteBuffers = new HashMap<String, ByteBuffer>();
         try {
             String[] colorMapFileNames = getColorMaps();
             for (String fileName : colorMapFileNames) {
@@ -240,23 +236,17 @@ public class JOCLColormapper {
 
                 in.close();
 
-                if (entries > 0) {
-                    if (entries != colorList.size()) {
-                        throw new IOException("colormaps not equally sized! " + fileName + " is the offender.");
-                    }
-                } else {
-                    entries = colorList.size();
-                }
-
-                colorMaps.put(fileName, initColorMap(colorList));
+                int[] colorArray = initColorMapToSetSize(COLORMAP_FINAL_ENTRIES, colorList);
+                colorMaps.put(fileName, colorArray);
+                legends.put(fileName, makeLegendImage(LEGEND_WIDTH, LEGEND_HEIGHT, colorArray));
+                legendByteBuffers.put(fileName,
+                        initColorMapToSetSizeForLegendTexture(COLORMAP_FINAL_ENTRIES, colorList));
                 logger.info("Colormap " + fileName + " registered for use.");
             }
 
         } catch (IOException e) {
             logger.error(e.getMessage());
         }
-
-        return entries;
     }
 
     /**
@@ -275,6 +265,24 @@ public class JOCLColormapper {
         }
 
         return result;
+    }
+
+    /**
+     * Getter for the list of colormap names in the directory. Used to load
+     * these maps.
+     * 
+     * @return the array containing all of the currently available colormap
+     *         names.
+     */
+    public static String[] getColormapNames() {
+        String[] names = new String[legends.size()];
+        int i = 0;
+        for (Entry<String, Color[][]> entry : legends.entrySet()) {
+            names[i] = entry.getKey();
+            i++;
+        }
+
+        return names;
     }
 
     /**
@@ -307,45 +315,173 @@ public class JOCLColormapper {
         }
     }
 
-    // /**
-    // * Creates the colorMap array which contains RGB colors as integers,
-    // * interpolated through the given colors with colors.length * stepSize
-    // steps
-    // *
-    // * @param stepSize
-    // * The number of interpolation steps between two colors
-    // * @param colors
-    // * The colors for the map
-    // */
-    // public int[] initColorMap(int stepSize, ArrayList<Color> colors) {
-    // int[] colorMap = new int[stepSize * colors.size()];
-    // int index = 0;
-    // for (int i = 0; i < colors.size() - 1; i++) {
-    // Color c0 = colors.get(i);
-    // int r0 = c0.getRed();
-    // int g0 = c0.getGreen();
-    // int b0 = c0.getBlue();
-    //
-    // Color c1 = colors.get(i + 1);
-    // int r1 = c1.getRed();
-    // int g1 = c1.getGreen();
-    // int b1 = c1.getBlue();
-    //
-    // int dr = r1 - r0;
-    // int dg = g1 - g0;
-    // int db = b1 - b0;
-    //
-    // for (int j = 0; j < stepSize; j++) {
-    // float alpha = (float) j / (stepSize - 1);
-    // int r = (int) (r0 + alpha * dr);
-    // int g = (int) (g0 + alpha * dg);
-    // int b = (int) (b0 + alpha * db);
-    // int rgba = 255 | r >> 8 | g >> 16 | b >> 24;
-    // colorMap[index++] = rgba;
-    // }
-    // }
-    // return colorMap;
-    // }
+    /**
+     * Creates the colorMap array which contains RGB colors as integers,
+     * interpolated through the given colors with colors.length * stepSize steps
+     * 
+     * @param stepSize
+     *            The number of interpolation steps between two colors
+     * @param colors
+     *            The colors for the map
+     */
+    private static int[] initColorMap(int stepSize, ArrayList<Color> colors) {
+        int[] colorMap = new int[stepSize * colors.size()];
+        int index = 0;
+        for (int i = 0; i < colors.size() - 1; i++) {
+            Color c0 = colors.get(i);
+            int r0 = c0.getRed();
+            int g0 = c0.getGreen();
+            int b0 = c0.getBlue();
+
+            Color c1 = colors.get(i + 1);
+            int r1 = c1.getRed();
+            int g1 = c1.getGreen();
+            int b1 = c1.getBlue();
+
+            int dr = r1 - r0;
+            int dg = g1 - g0;
+            int db = b1 - b0;
+
+            for (int j = 0; j < stepSize; j++) {
+                float alpha = (float) j / (stepSize - 1);
+                int r = (int) (r0 + alpha * dr);
+                int g = (int) (g0 + alpha * dg);
+                int b = (int) (b0 + alpha * db);
+
+                int abgr = (255 << 24) | (b << 16) | (g << 8) | r << 0;
+                colorMap[index++] = abgr;
+            }
+        }
+        return colorMap;
+    }
+
+    /**
+     * Creates the colorMap array which contains RGB colors as integers,
+     * interpolated through the given colors with a set final length
+     * 
+     * @param finalSize
+     *            The total number of color entries in the resulting map
+     * @param colors
+     *            The colors for the map
+     */
+    private static int[] initColorMapToSetSize(int finalSize, ArrayList<Color> colors) {
+        int[] colorMap = new int[finalSize];
+        int cmEntries = colors.size();
+
+        for (int i = 0; i < finalSize; i++) {
+            float rawIndex = cmEntries * (i / (float) finalSize);
+
+            int iLow = (int) Math.floor(rawIndex);
+            int iHigh = (int) Math.ceil(rawIndex);
+
+            Color cLow;
+            if (iLow == cmEntries) {
+                cLow = colors.get(cmEntries - 1);
+            } else if (iLow < 0) {
+                cLow = colors.get(0);
+            } else {
+                cLow = colors.get(iLow);
+            }
+
+            Color cHigh;
+            if (iHigh == cmEntries) {
+                cHigh = colors.get(cmEntries - 1);
+            } else if (iHigh < 0) {
+                cHigh = colors.get(0);
+            } else {
+                cHigh = colors.get(iHigh);
+            }
+
+            float percentage = rawIndex - iLow;
+
+            int r0 = cLow.getRed();
+            int g0 = cLow.getGreen();
+            int b0 = cLow.getBlue();
+
+            int r1 = cHigh.getRed();
+            int g1 = cHigh.getGreen();
+            int b1 = cHigh.getBlue();
+
+            int dr = r1 - r0;
+            int dg = g1 - g0;
+            int db = b1 - b0;
+
+            int r = (int) (r0 + percentage * dr);
+            int g = (int) (g0 + percentage * dg);
+            int b = (int) (b0 + percentage * db);
+
+            int abgr = (255 << 24) | (b << 16) | (g << 8) | r << 0;
+            colorMap[i] = abgr;
+        }
+
+        return colorMap;
+    }
+
+    /**
+     * Creates the colorMap array which contains RGB colors as integers,
+     * interpolated through the given colors with a set final length
+     * 
+     * @param finalSize
+     *            The total number of color entries in the resulting map
+     * @param colors
+     *            The colors for the map
+     */
+    private static ByteBuffer initColorMapToSetSizeForLegendTexture(int finalSize, ArrayList<Color> colors) {
+        ByteBuffer colorMap = Buffers.newDirectByteBuffer(finalSize * 4);
+        int cmEntries = colors.size();
+
+        for (int i = 0; i < finalSize; i++) {
+            float rawIndex = cmEntries * (i / (float) finalSize);
+
+            int iLow = (int) Math.floor(rawIndex);
+            int iHigh = (int) Math.ceil(rawIndex);
+
+            Color cLow;
+            if (iLow == cmEntries) {
+                cLow = colors.get(cmEntries - 1);
+            } else if (iLow < 0) {
+                cLow = colors.get(0);
+            } else {
+                cLow = colors.get(iLow);
+            }
+
+            Color cHigh;
+            if (iHigh == cmEntries) {
+                cHigh = colors.get(cmEntries - 1);
+            } else if (iHigh < 0) {
+                cHigh = colors.get(0);
+            } else {
+                cHigh = colors.get(iHigh);
+            }
+
+            float percentage = rawIndex - iLow;
+
+            int r0 = cLow.getRed();
+            int g0 = cLow.getGreen();
+            int b0 = cLow.getBlue();
+
+            int r1 = cHigh.getRed();
+            int g1 = cHigh.getGreen();
+            int b1 = cHigh.getBlue();
+
+            int dr = r1 - r0;
+            int dg = g1 - g0;
+            int db = b1 - b0;
+
+            int r = (int) (r0 + percentage * dr);
+            int g = (int) (g0 + percentage * dg);
+            int b = (int) (b0 + percentage * db);
+
+            colorMap.put((byte) (r));
+            colorMap.put((byte) (g));
+            colorMap.put((byte) (b));
+            colorMap.put((byte) (255));
+        }
+
+        colorMap.flip();
+
+        return colorMap;
+    }
 
     /**
      * Creates the colorMap array which contains RGB colors as integers,
@@ -356,7 +492,7 @@ public class JOCLColormapper {
      * @param colors
      *            The colors for the map
      */
-    public int[] initColorMap(ArrayList<Color> colors) {
+    private static int[] initColorMap(ArrayList<Color> colors) {
         int[] colorMap = new int[colors.size()];
         for (int i = 0; i < colors.size(); i++) {
             Color c0 = colors.get(i);
@@ -370,10 +506,10 @@ public class JOCLColormapper {
     }
 
     /**
-     * Execute the kernel function and read the resulting pixel data into the
-     * BufferedImage
+     * Execute the kernel function and return the resulting pixel data in an
+     * array
      */
-    public synchronized int[] getImage(String colormapName, Dimensions dim, float[] data, float fillValue) {
+    public synchronized int[] makeImage(String colormapName, Dimensions dim, float[] data, float fillValue) {
         // select colormap and write to GPU
         int[] colorMap = colorMaps.get(colormapName);
         if (colorMap == null) {
@@ -423,6 +559,117 @@ public class JOCLColormapper {
                 0, null, null);
 
         return pixels;
+    }
+
+    public ByteBuffer getColormapForLegendTexture(String colormapName) {
+        return legendByteBuffers.get(colormapName);
+    }
+
+    /**
+     * Function that returns a combobox with all of the legends of the entire
+     * list of colormaps for selection.
+     * 
+     * @param preferredDimensions
+     *            The dimensions of the combobox to be returned.
+     * @return The combobox.
+     */
+    public static JComboBox<SimpleImageIcon> getLegendJComboBox(Dimension preferredDimensions) {
+
+        int width = (int) (preferredDimensions.width * .8), height = (int) (preferredDimensions.height * .8);
+
+        SimpleImageIcon[] simpleImageIcons = new SimpleImageIcon[legends.size()];
+
+        int i = 0;
+        for (Entry<String, Color[][]> entry : legends.entrySet()) {
+            String description = entry.getKey();
+            Color[][] legendImageBuffer = makeLegendImage(width, height, colorMaps.get(description));
+
+            BufferedImage legend = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
+            WritableRaster raster = legend.getRaster();
+
+            for (int col = 0; col < width; col++) {
+                for (int row = 0; row < height; row++) {
+                    raster.setSample(col, row, 0, legendImageBuffer[col][row].getBlue() * 255);
+                    raster.setSample(col, row, 1, legendImageBuffer[col][row].getGreen() * 255);
+                    raster.setSample(col, row, 2, legendImageBuffer[col][row].getRed() * 255);
+                }
+            }
+
+            ImageIcon icon = new ImageIcon(legend);
+
+            SimpleImageIcon simpleImageIcon = new SimpleImageIcon(description, icon);
+
+            simpleImageIcons[i] = simpleImageIcon;
+            i++;
+        }
+
+        JComboBox<SimpleImageIcon> legendList = new JComboBox<SimpleImageIcon>(simpleImageIcons);
+
+        ImageComboBoxRenderer renderer = new ImageComboBoxRenderer(simpleImageIcons);
+        renderer.setPreferredSize(preferredDimensions);
+        legendList.setRenderer(renderer);
+        legendList.setMaximumRowCount(10);
+
+        return legendList;
+    }
+
+    /**
+     * Function that makes a Legend for a colormap.
+     * 
+     * @param width
+     *            The width of the image to create.
+     * @param height
+     *            The hieght of the image to create.
+     * @param colorMap
+     *            The colormap to create a legend of.
+     * @return A Color[][] that holds the pixels corresponding to an image for a
+     *         colormap legend.
+     */
+    private static Color[][] makeLegendImage(int width, int height, int[] colorMap) {
+        Color[][] outBuf = new Color[width][height];
+
+        for (int col = 0; col < width; col++) {
+            float index = col / (float) width;
+
+            int cmEntries = colorMap.length;
+            int cmIndex = (int) (index * cmEntries);
+
+            Color color;
+            if (cmIndex == cmEntries) {
+                color = new Color(colorMap[cmEntries - 1]);
+            } else if (cmIndex < 0) {
+                color = new Color(colorMap[0]);
+            } else {
+                color = new Color(colorMap[cmIndex]);
+            }
+
+            for (int row = 0; row < height; row++) {
+                outBuf[col][row] = color;
+            }
+        }
+
+        return outBuf;
+    }
+
+    /**
+     * Getter for the index number of a specific colormap name (used by swing).
+     * 
+     * @param colorMap
+     *            The name of the colormap selected
+     * @return The index number.
+     */
+    public static int getIndexOfColormap(String colorMap) {
+        int i = 0;
+        for (Entry<String, Color[][]> entry : legends.entrySet()) {
+            String name = entry.getKey();
+
+            if (name.compareTo(colorMap) == 0) {
+                return i;
+            }
+            i++;
+        }
+
+        return -1;
     }
 
 }

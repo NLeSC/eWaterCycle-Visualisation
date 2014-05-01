@@ -228,7 +228,7 @@ public class TimedPlayer implements Runnable {
 
                     if (currentState == states.MOVIEMAKING || currentState == states.REVIEW) {
                         if (!isScreenshotNeeded()
-                                && numberOfFramesPassedBetweenTimesteps != settings.getNumberOfScreenshotsPerTimeStep()) {
+                                && numberOfFramesPassedBetweenTimesteps < settings.getNumberOfScreenshotsPerTimeStep()) {
                             int movieFrameNumber = (frameNumber * settings.getNumberOfScreenshotsPerTimeStep())
                                     + numberOfFramesPassedBetweenTimesteps;
                             for (Orientation o : orientationList) {
@@ -238,7 +238,6 @@ public class TimedPlayer implements Runnable {
                                     float viewDist = o.getViewDist();
                                     inputHandler.setRotation(rotation);
                                     inputHandler.setViewDist(viewDist);
-
                                 }
                             }
                             if (currentState == states.MOVIEMAKING) {
@@ -411,12 +410,12 @@ public class TimedPlayer implements Runnable {
                 }
 
                 Float3Vector startLocation = new Float3Vector(currentKeyFrame.getRotation().getX(), currentKeyFrame
-                        .getRotation().getY(), currentKeyFrame.getViewDist());
+                        .getRotation().getY(), 0f);
                 Float3Vector endLocation = new Float3Vector(nextKeyFrame.getRotation().getX(), nextKeyFrame
-                        .getRotation().getY(), nextKeyFrame.getViewDist());
+                        .getRotation().getY(), 0f);
 
                 if (startLocation.getX() - endLocation.getX() < 0f) {
-                    startLocation.setX(startLocation.getX() + 360f);
+                    startLocation.setX((startLocation.getX() + 360f) % 360f);
                 }
 
                 if (startLocation.getY() - endLocation.getY() < 0f) {
@@ -425,34 +424,21 @@ public class TimedPlayer implements Runnable {
 
                 Float3Vector still = new Float3Vector();
 
-                Float3Vector[] curveSteps = FloatVectorMath.degreesBezierCurve(numberOfInterpolationFrames,
-                        startLocation, still, still, endLocation);
+                Float3Vector[] curveSteps = degreesBezierCurve(numberOfInterpolationFrames, startLocation, endLocation);
 
                 // Patch for zoom
-                // Float4Vector startZoom = new
-                // Float4Vector(currentKeyFrame.getViewDist(), 0f, 0f, 1f);
-                // Float4Vector endZoom = new
-                // Float4Vector(nextKeyFrame.getViewDist(), 0f, 0f, 1f);
-                //
-                // Float4Vector[] zoomSteps =
-                // FloatVectorMath.bezierCurve(numberOfInterpolationFrames,
-                // startZoom,
-                // still, endControl, endZoom);
+                Float4Vector startZoom = new Float4Vector(currentKeyFrame.getViewDist(), 0f, 0f, 1f);
+                Float4Vector endZoom = new Float4Vector(nextKeyFrame.getViewDist(), 0f, 0f, 1f);
 
-                System.out.println("O : "
-                        + new Float4Vector(currentKeyFrame.getRotation(), currentKeyFrame.getViewDist()));
+                Float4Vector[] zoomSteps = FloatVectorMath.bezierCurve(numberOfInterpolationFrames, startZoom, still,
+                        still, endZoom);
 
                 for (int j = 0; j < numberOfInterpolationFrames; j++) {
-                    int currentFrameNumber = intermediateFrameNumbers.get(currentKeyFrame.getFrameNumber() + j);
-                    Orientation newOrientation = new Orientation(currentFrameNumber, curveSteps[j],
-                            curveSteps[j].getZ());
+                    int currentFrameNumber = intermediateFrameNumbers.get(currentKeyFrame.getFrameNumber()
+                            * settings.getNumberOfScreenshotsPerTimeStep() + j);
+                    Orientation newOrientation = new Orientation(currentFrameNumber, curveSteps[j], zoomSteps[j].getZ());
                     orientationList.add(newOrientation);
-
-                    System.out.println("S+" + j + ": " + new Float4Vector(curveSteps[j], curveSteps[j].getX()));
                 }
-
-                System.out.println("D : " + new Float4Vector(nextKeyFrame.getRotation(), nextKeyFrame.getViewDist()));
-
             }
         }
 
@@ -464,6 +450,102 @@ public class TimedPlayer implements Runnable {
         } else {
             reviewMode();
         }
+    }
+
+    /**
+     * Bezier curve interpolation for _rotation_ between two points with control
+     * vectors (this could be particle speed at the points). Outputs a number of
+     * degrees for rotations.
+     * 
+     * @param steps
+     *            The number of steps on the bezier curve to calculate.
+     * @param startLocation
+     *            The starting point for this bezier curve.
+     * @param startControl
+     *            The starting point's control vector.
+     * @param endControl
+     *            The end point for this bezier curve.
+     * @param endLocation
+     *            The end point's control vector.
+     * @return The array of points on the new bezier curve.
+     */
+    public static Float3Vector[] degreesBezierCurve(int steps, Float3Vector startLocation, Float3Vector endLocation) {
+        Float3Vector[] newBezierPoints = new Float3Vector[steps];
+        for (int i = 0; i < steps; i++) {
+            newBezierPoints[i] = new Float3Vector();
+        }
+
+        float t = 1f / steps;
+        float temp = t * t;
+
+        for (int coord = 0; coord < 3; coord++) {
+            float p[] = new float[4];
+            if (coord == 0) {
+                p[0] = startLocation.getX();
+                p[1] = startLocation.getX();
+                p[2] = endLocation.getX();
+                p[3] = endLocation.getX();
+            } else if (coord == 1) {
+                p[0] = startLocation.getY();
+                p[1] = startLocation.getY();
+                p[2] = endLocation.getY();
+                p[3] = endLocation.getY();
+            } else if (coord == 2) {
+                p[0] = startLocation.getZ();
+                p[1] = startLocation.getZ();
+                p[2] = endLocation.getZ();
+                p[3] = endLocation.getZ();
+            }
+
+            // p[0] = p[0] % 360f;
+            // p[1] = p[1] % 360f;
+            // p[2] = p[2] % 360f;
+            // p[3] = p[3] % 360f;
+
+            if (p[0] - p[3] < 0f) {
+                p[0] = p[0] + 360f;
+                p[1] = p[0];
+            } else if (p[0] + p[3] > 360f) {
+                p[0] = p[0] - 360f;
+                p[1] = p[0];
+            }
+
+            // p[0] = p[0] % 360f;
+            // p[1] = p[1] % 360f;
+
+            // The algorithm itself begins here ==
+            float f, fd, fdd, fddd, fdd_per_2, fddd_per_2, fddd_per_6; // NOSONAR
+
+            // I've tried to optimize the amount of
+            // multiplications here, but these are exactly
+            // the same formulas that were derived earlier
+            // for f(0), f'(0)*t etc.
+            f = p[0];
+            fd = 3 * (p[1] - p[0]) * t;
+            fdd_per_2 = 3 * (p[0] - 2 * p[1] + p[2]) * temp;
+            fddd_per_2 = 3 * (3 * (p[1] - p[2]) + p[3] - p[0]) * temp * t;
+
+            fddd = fddd_per_2 + fddd_per_2;
+            fdd = fdd_per_2 + fdd_per_2;
+            fddd_per_6 = fddd_per_2 * (1f / 3);
+
+            for (int loop = 0; loop < steps; loop++) {
+                if (coord == 0) {
+                    newBezierPoints[loop].setX(f % 360f);
+                } else if (coord == 1) {
+                    newBezierPoints[loop].setY(f % 360f);
+                } else if (coord == 2) {
+                    newBezierPoints[loop].setZ(f % 360f);
+                }
+
+                f = f + fd + fdd_per_2 + fddd_per_6;
+                fd = fd + fdd + fddd_per_2;
+                fdd = fdd + fddd;
+                fdd_per_2 = fdd_per_2 + fddd_per_2;
+            }
+        }
+
+        return newBezierPoints;
     }
 
     public synchronized void movieMode() {

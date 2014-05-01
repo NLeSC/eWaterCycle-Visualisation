@@ -39,7 +39,6 @@ import javax.swing.plaf.basic.BasicSliderUI;
 
 import nl.esciencecenter.neon.NeonInterfacePanel;
 import nl.esciencecenter.neon.math.Float3Vector;
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.swing.CustomJSlider;
 import nl.esciencecenter.neon.swing.GoggleSwing;
 import nl.esciencecenter.neon.swing.RangeSlider;
@@ -548,7 +547,7 @@ public class WaterCyclePanel extends NeonInterfacePanel {
 
             String[] dataModes = SurfaceTextureDescription.getDataModes();
 
-            final String[] colorMaps = ColormapInterpreter.getColormapNames();
+            final String[] colorMaps = JOCLColormapper.getColormapNames();
 
             for (int i = 0; i < settings.getNumScreensRows() * settings.getNumScreensCols(); i++) {
                 final int currentScreen = i;
@@ -604,10 +603,10 @@ public class WaterCyclePanel extends NeonInterfacePanel {
 
                 screenVcomponents.add(GoggleSwing.hBoxedComponents(screenHcomponents, true));
 
-                final JComboBox<SimpleImageIcon> colorMapsComboBox = ColormapInterpreter
-                        .getLegendJComboBox(new Dimension(240, 25));
-                colorMapsComboBox.setSelectedItem(ColormapInterpreter.getIndexOfColormap(selectionDescription
-                        .getColorMap()));
+                final JComboBox<SimpleImageIcon> colorMapsComboBox = JOCLColormapper.getLegendJComboBox(new Dimension(
+                        240, 25));
+                colorMapsComboBox
+                        .setSelectedItem(JOCLColormapper.getIndexOfColormap(selectionDescription.getColorMap()));
                 colorMapsComboBox.setMinimumSize(new Dimension(100, 25));
                 colorMapsComboBox.setMaximumSize(new Dimension(240, 25));
                 screenVcomponents.add(colorMapsComboBox);
