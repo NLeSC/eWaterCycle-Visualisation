@@ -14,31 +14,30 @@ import org.slf4j.LoggerFactory;
 import com.jogamp.common.nio.Buffers;
 
 public class EfficientTextureStorage {
-    private static final int LEGEND_TEXTURE_HEIGHT = 500;
-    private static final int LEGEND_TEXTURE_WIDTH = 1;
+    private static final int                  LEGEND_TEXTURE_HEIGHT = 500;
+    private static final int                  LEGEND_TEXTURE_WIDTH  = 1;
 
-    private final static Logger logger = LoggerFactory.getLogger(EfficientTextureStorage.class);
+    private final static Logger               logger                = LoggerFactory
+                                                                            .getLogger(EfficientTextureStorage.class);
 
     private final SurfaceTextureDescription[] oldScreenA;
     private final SurfaceTextureDescription[] newScreenA;
-    private List<TextureCombo> storage;
+    private List<TextureCombo>                storage;
 
-    private final DatasetManager manager;
+    private final DatasetManager              manager;
 
-    private final ByteBufferTexture EMPTY_SURFACE_BUFFER;
-    private final ByteBufferTexture EMPTY_LEGEND_BUFFER;
+    private final ByteBufferTexture           EMPTY_SURFACE_BUFFER;
+    private final ByteBufferTexture           EMPTY_LEGEND_BUFFER;
 
-    private final int width;
-    private final int height;
-    private final int surfaceMultiTexUnit;
-    private final int legendMultiTexUnit;
-
-    private long startTimeMillis, stopTimeMillis;
+    private final int                         width;
+    private final int                         height;
+    private final int                         surfaceMultiTexUnit;
+    private final int                         legendMultiTexUnit;
 
     public class TextureCombo {
         private final SurfaceTextureDescription description;
-        private final Texture2D surfaceTexture;
-        private final Texture2D legendTexture;
+        private final Texture2D                 surfaceTexture;
+        private final Texture2D                 legendTexture;
 
         public TextureCombo(SurfaceTextureDescription description, Texture2D surfaceTexture, Texture2D legendTexture) {
             this.description = description;
@@ -105,8 +104,6 @@ public class EfficientTextureStorage {
             }
         }
 
-        // logger.debug("EMPTY BUFFER returned for # " + screenNumber +
-        // ", desc: " + newScreenA[screenNumber]);
         return new TextureCombo(null, EMPTY_SURFACE_BUFFER, EMPTY_LEGEND_BUFFER);
     }
 

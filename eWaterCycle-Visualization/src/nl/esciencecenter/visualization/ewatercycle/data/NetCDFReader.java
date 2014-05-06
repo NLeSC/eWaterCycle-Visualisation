@@ -27,22 +27,22 @@ import ucar.nc2.Variable;
 import com.jogamp.common.nio.Buffers;
 
 public class NetCDFReader {
-    private final static Logger logger = LoggerFactory.getLogger(NetCDFReader.class);
-    private final WaterCycleSettings settings = WaterCycleSettings.getInstance();
+    private final static Logger                    logger   = LoggerFactory.getLogger(NetCDFReader.class);
+    private final WaterCycleSettings               settings = WaterCycleSettings.getInstance();
 
-    private final NetcdfFile ncfile;
-    private final HashMap<String, Variable> variables;
-    private final HashMap<String, String> units;
+    private final NetcdfFile                       ncfile;
+    private final HashMap<String, Variable>        variables;
+    private final HashMap<String, String>          units;
     private final HashMap<String, List<Dimension>> dimensions;
-    private final HashMap<String, List<Integer>> shapes;
-    private final HashMap<String, Float> fillValues;
+    private final HashMap<String, List<Integer>>   shapes;
+    private final HashMap<String, Float>           fillValues;
 
-    private final HashMap<String, Float> mins;
-    private final HashMap<String, Float> maxes;
+    private final HashMap<String, Float>           mins;
+    private final HashMap<String, Float>           maxes;
 
-    private final CacheFileManager cache;
+    private final CacheFileManager                 cache;
 
-    private long startTimeMillis, stopTimeMillis;
+    private long                                   startTimeMillis, stopTimeMillis;
 
     public NetCDFReader(File file) {
         this.ncfile = open(file);
@@ -220,14 +220,9 @@ public class NetCDFReader {
 
     public synchronized float[] getData(String variableName, int time) {
         Variable variable = variables.get(variableName);
-        int lats = shapes.get(variableName).get(1);
-        int lons = shapes.get(variableName).get(2);
-
-        logger.debug("creating image size: " + lats + "x" + lons);
 
         float[] data = null;
 
-        startTimeMillis = System.currentTimeMillis();
         Array netCDFArray;
         try {
             netCDFArray = variable.slice(0, time).read();

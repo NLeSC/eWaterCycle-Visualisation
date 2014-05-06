@@ -19,26 +19,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatasetManager {
-    private final static Logger logger = LoggerFactory.getLogger(DatasetManager.class);
-    private final WaterCycleSettings settings = WaterCycleSettings.getInstance();
+    private final static Logger           logger   = LoggerFactory.getLogger(DatasetManager.class);
+    private final WaterCycleSettings      settings = WaterCycleSettings.getInstance();
 
-    private ArrayList<Integer> availableFrameSequenceNumbers;
+    private ArrayList<Integer>            availableFrameSequenceNumbers;
     private HashMap<String, NetCDFReader> readers;
-    private EfficientTextureStorage effTexStorage;
+    private EfficientTextureStorage       effTexStorage;
 
-    private int latArraySize;
-    private int lonArraySize;
+    private int                           latArraySize;
+    private int                           lonArraySize;
 
-    private final ExecutorService executor;
-
-    private final JOCLColormapper mapper;
-
-    // private final List<SurfaceTextureDescription> queue;
+    private final ExecutorService         executor;
+    private final JOCLColormapper         mapper;
 
     private class Worker implements Runnable {
         private final SurfaceTextureDescription desc;
-        private long stopTimeMillis;
-        private long startTimeMillis;
 
         public Worker(SurfaceTextureDescription desc) {
             this.desc = desc;
@@ -46,12 +41,6 @@ public class DatasetManager {
 
         @Override
         public void run() {
-            startTimeMillis = System.currentTimeMillis();
-            stopTimeMillis = System.currentTimeMillis();
-
-            // logger.debug("--- Timing start for job : " + desc);
-
-            startTimeMillis = System.currentTimeMillis();
             int frameNumber = desc.getFrameNumber();
             String varName = desc.getVarName();
 
@@ -61,8 +50,6 @@ public class DatasetManager {
                 logger.debug("buildImages : Requested frameNumber  " + frameNumber + " out of range.");
             }
             String variableName = desc.getVarName();
-            // ByteBuffer surfaceBuffer = currentReader.getData(varName,
-            // frameNumber);
 
             Dimensions colormapDims = new Dimensions(settings.getCurrentVarMin(varName),
                     settings.getCurrentVarMax(varName));
@@ -70,47 +57,11 @@ public class DatasetManager {
             while (surfaceArray == null) {
                 surfaceArray = currentReader.getData(varName, frameNumber);
             }
-            stopTimeMillis = System.currentTimeMillis();
-
-            logger.debug("Read: " + ((long) surfaceArray.length * (Float.SIZE / 8)) + " bytes, in "
-                    + ((stopTimeMillis - startTimeMillis) / 1000.0) + " sec.");
-
-            startTimeMillis = System.currentTimeMillis();
 
             int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
                     currentReader.getFillValue(variableName));
-            stopTimeMillis = System.currentTimeMillis();
 
-            logger.debug("JOCL pixel generation: " + ((long) surfaceArray.length * (Float.SIZE / 8)) + " bytes, in "
-                    + ((stopTimeMillis - startTimeMillis) / 1000.0) + " sec.");
-
-            startTimeMillis = System.currentTimeMillis();
-
-            // int height = 500;
-            // int width = 1;
-            ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());// ByteBuffer.allocate(height
-                                                                                          // *
-                                                                                          // width
-                                                                                          // *
-                                                                                          // 4);
-            //
-            // for (int row = height - 1; row >= 0; row--) {
-            // float index = row / (float) height;
-            // float var = (index * colormapDims.getDiff()) +
-            // colormapDims.getMin();
-            //
-            // Color c = ColormapInterpreter.getColor(desc.getColorMap(),
-            // colormapDims, var);
-            //
-            // for (int col = 0; col < width; col++) {
-            // legendBuf.put((byte) (255 * c.getRed()));
-            // legendBuf.put((byte) (255 * c.getGreen()));
-            // legendBuf.put((byte) (255 * c.getBlue()));
-            // legendBuf.put((byte) (255));
-            // }
-            // }
-            //
-            // legendBuf.flip();
+            ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
 
             effTexStorage.setImageCombo(desc, pixelArray, legendBuf);
         }
@@ -118,7 +69,6 @@ public class DatasetManager {
     }
 
     public DatasetManager(File[] files) {
-        // queue = new ArrayList<SurfaceTextureDescription>();
         executor = Executors.newFixedThreadPool(4);
 
         init(files);
@@ -205,50 +155,8 @@ public class DatasetManager {
     }
 
     public synchronized void buildImages(SurfaceTextureDescription desc) {
-        // for (int i = 0; i < 10; i++) {
         Runnable worker = new Worker(desc);
         executor.execute(worker);
-        // }
-        // int frameNumber = desc.getFrameNumber();
-        // String varName = desc.getVarName();
-        //
-        // NetCDFReader currentReader = readers.get(varName);
-        //
-        // if (frameNumber < 0 || frameNumber >
-        // currentReader.getAvailableFrames(varName)) {
-        // logger.debug("buildImages : Requested frameNumber  " + frameNumber +
-        // " out of range.");
-        // }
-        //
-        // ByteBuffer surfaceBuffer = currentReader.getImage(desc.getColorMap(),
-        // varName, frameNumber, desc.isLogScale());
-        // effTexStorage.setSurfaceImage(desc, surfaceBuffer);
-        //
-        // Dimensions colormapDims = new
-        // Dimensions(settings.getCurrentVarMin(varName),
-        // settings.getCurrentVarMax(varName));
-        //
-        // int height = 500;
-        // int width = 1;
-        // ByteBuffer outBuf = ByteBuffer.allocate(height * width * 4);
-        //
-        // for (int row = height - 1; row >= 0; row--) {
-        // float index = row / (float) height;
-        // float var = (index * colormapDims.getDiff()) + colormapDims.getMin();
-        //
-        // Color c = ColormapInterpreter.getColor(desc.getColorMap(),
-        // colormapDims, var);
-        //
-        // for (int col = 0; col < width; col++) {
-        // outBuf.put((byte) (255 * c.getRed()));
-        // outBuf.put((byte) (255 * c.getGreen()));
-        // outBuf.put((byte) (255 * c.getBlue()));
-        // }
-        // }
-        //
-        // outBuf.flip();
-        //
-        // effTexStorage.setLegendImage(desc, outBuf);
     }
 
     public synchronized EfficientTextureStorage getEfficientTextureStorage() {
