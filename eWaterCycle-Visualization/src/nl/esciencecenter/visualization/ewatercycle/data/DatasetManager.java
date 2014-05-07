@@ -19,18 +19,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DatasetManager {
-    private final static Logger           logger   = LoggerFactory.getLogger(DatasetManager.class);
-    private final WaterCycleSettings      settings = WaterCycleSettings.getInstance();
+    private final static Logger logger = LoggerFactory.getLogger(DatasetManager.class);
+    private final WaterCycleSettings settings = WaterCycleSettings.getInstance();
 
-    private ArrayList<Integer>            availableFrameSequenceNumbers;
+    private ArrayList<Integer> availableFrameSequenceNumbers;
     private HashMap<String, NetCDFReader> readers;
-    private EfficientTextureStorage       effTexStorage;
+    private EfficientTextureStorage effTexStorage;
 
-    private int                           latArraySize;
-    private int                           lonArraySize;
+    private int latArraySize;
+    private int lonArraySize;
 
-    private final ExecutorService         executor;
-    private final JOCLColormapper         mapper;
+    private final ExecutorService executor;
+    private final JOCLColormapper mapper;
 
     private class Worker implements Runnable {
         private final SurfaceTextureDescription desc;
@@ -59,7 +59,7 @@ public class DatasetManager {
             }
 
             int[] pixelArray = mapper.makeImage(desc.getColorMap(), colormapDims, surfaceArray,
-                    currentReader.getFillValue(variableName));
+                    currentReader.getFillValue(variableName), desc.isLogScale());
 
             ByteBuffer legendBuf = mapper.getColormapForLegendTexture(desc.getColorMap());
 

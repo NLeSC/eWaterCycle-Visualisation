@@ -256,14 +256,16 @@ public class TimedPlayer implements Runnable {
                     if (currentState != states.REDRAWING) {
                         int newFrameNumber;
                         try {
-                            if (numberOfFramesPassedBetweenTimesteps == settings.getNumberOfScreenshotsPerTimeStep()) {
+                            if ((currentState != states.MOVIEMAKING && currentState != states.REVIEW)
+                                    || numberOfFramesPassedBetweenTimesteps == settings
+                                            .getNumberOfScreenshotsPerTimeStep()) {
                                 if (effTexStorage.doneWithLastRequest()) {
                                     logger.debug("Done with last request");
                                     newFrameNumber = dsManager.getNextFrameNumber(frameNumber);
 
                                     updateFrame(newFrameNumber, false);
                                 } else {
-                                    logger.debug("Not done with last request");
+                                    Thread.sleep(10);
                                 }
                                 numberOfFramesPassedBetweenTimesteps = 0;
                             }
