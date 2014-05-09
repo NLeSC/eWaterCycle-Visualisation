@@ -391,7 +391,11 @@ public class WaterCycleWindow implements GLEventListener {
                                     currentDesc);
                             // Remove all of the (now unused) textures
                             for (Texture2D tex : oldTextures) {
-                                tex.delete(gl);
+                                try {
+                                    tex.delete(gl);
+                                } catch (UninitializedException e) {
+                                    logger.warn(e.getMessage());
+                                }
                             }
                         }
                         // We are waiting for images to be generated

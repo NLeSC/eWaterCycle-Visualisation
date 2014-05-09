@@ -2,15 +2,11 @@ package nl.esciencecenter.visualization.ewatercycle.data;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
-import nl.esciencecenter.neon.swing.ColormapInterpreter.Color;
-import nl.esciencecenter.neon.swing.ColormapInterpreter.Dimensions;
 import nl.esciencecenter.visualization.ewatercycle.CacheFileManager;
 import nl.esciencecenter.visualization.ewatercycle.WaterCycleSettings;
 
@@ -24,25 +20,23 @@ import ucar.nc2.Dimension;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 
-import com.jogamp.common.nio.Buffers;
-
 public class NetCDFReader {
-    private final static Logger                    logger   = LoggerFactory.getLogger(NetCDFReader.class);
-    private final WaterCycleSettings               settings = WaterCycleSettings.getInstance();
+    private final static Logger logger = LoggerFactory.getLogger(NetCDFReader.class);
+    private final WaterCycleSettings settings = WaterCycleSettings.getInstance();
 
-    private final NetcdfFile                       ncfile;
-    private final HashMap<String, Variable>        variables;
-    private final HashMap<String, String>          units;
+    private final NetcdfFile ncfile;
+    private final HashMap<String, Variable> variables;
+    private final HashMap<String, String> units;
     private final HashMap<String, List<Dimension>> dimensions;
-    private final HashMap<String, List<Integer>>   shapes;
-    private final HashMap<String, Float>           fillValues;
+    private final HashMap<String, List<Integer>> shapes;
+    private final HashMap<String, Float> fillValues;
 
-    private final HashMap<String, Float>           mins;
-    private final HashMap<String, Float>           maxes;
+    private final HashMap<String, Float> mins;
+    private final HashMap<String, Float> maxes;
 
-    private final CacheFileManager                 cache;
+    private final CacheFileManager cache;
 
-    private long                                   startTimeMillis, stopTimeMillis;
+    private long startTimeMillis, stopTimeMillis;
 
     public NetCDFReader(File file) {
         this.ncfile = open(file);
@@ -154,69 +148,75 @@ public class NetCDFReader {
         return units.get(varName);
     }
 
-    public ByteBuffer getImage(String colorMapname, String variableName, int time, boolean logScale) {
-        Variable variable = variables.get(variableName);
-        int lats = shapes.get(variableName).get(1);
-        int lons = shapes.get(variableName).get(2);
-
-        logger.debug("creating image size: " + lats + "x" + lons);
-
-        ByteBuffer result = Buffers.newDirectByteBuffer(lats * lons * 3);
-
-        try {
-            startTimeMillis = System.currentTimeMillis();
-            Array netCDFArray = variable.slice(0, time).read();
-            float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
-            stopTimeMillis = System.currentTimeMillis();
-
-            logger.debug("---");
-            logger.debug("Read: " + ((long) data.length * (Float.SIZE / 8)) + " bytes, at "
-                    + (((long) data.length * (Float.SIZE / 8) * 1000) / (double) (stopTimeMillis - startTimeMillis))
-                    / 1000000 + " MB/sec.");
-
-            startTimeMillis = System.currentTimeMillis();
-            Dimensions colormapDims;
-            if (logScale) {
-                colormapDims = new Dimensions((float) Math.log(settings.getCurrentVarMin(variableName) + 1f),
-                        (float) Math.log(settings.getCurrentVarMax(variableName) + 1f));
-                for (int lat = 0; lat < lats; lat++) {
-                    for (int lon = lons - 1; lon >= 0; lon--) {
-                        Color color = ColormapInterpreter.getColor(colorMapname, colormapDims,
-                                (float) Math.log(data[lat * lons + lon] + 1f),
-                                (float) Math.log(fillValues.get(variableName)));
-                        result.put((byte) (color.getRed() * 255));
-                        result.put((byte) (color.getGreen() * 255));
-                        result.put((byte) (color.getBlue() * 255));
-                    }
-                }
-            } else {
-                colormapDims = new Dimensions(settings.getCurrentVarMin(variableName),
-                        settings.getCurrentVarMax(variableName));
-                for (int lat = 0; lat < lats; lat++) {
-                    for (int lon = lons - 1; lon >= 0; lon--) {
-                        Color color = ColormapInterpreter.getColor(colorMapname, colormapDims, data[lat * lons + lon],
-                                fillValues.get(variableName));
-                        result.put((byte) (color.getRed() * 255));
-                        result.put((byte) (color.getGreen() * 255));
-                        result.put((byte) (color.getBlue() * 255));
-                    }
-                }
-            }
-            stopTimeMillis = System.currentTimeMillis();
-            logger.debug("Colormap creation: : "
-                    + (((long) data.length * (Float.SIZE / 8) * 1000) / (double) (stopTimeMillis - startTimeMillis))
-                    / 1000000 + " MB/sec.");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InvalidRangeException e) {
-            e.printStackTrace();
-        }
-
-        result.flip();
-
-        return result;
-    }
+    // public ByteBuffer getImage(String colorMapname, String variableName, int
+    // time, boolean logScale) {
+    // Variable variable = variables.get(variableName);
+    // int lats = shapes.get(variableName).get(1);
+    // int lons = shapes.get(variableName).get(2);
+    //
+    // logger.debug("creating image size: " + lats + "x" + lons);
+    //
+    // ByteBuffer result = Buffers.newDirectByteBuffer(lats * lons * 3);
+    //
+    // try {
+    // startTimeMillis = System.currentTimeMillis();
+    // Array netCDFArray = variable.slice(0, time).read();
+    // float[] data = (float[]) netCDFArray.get1DJavaArray(float.class);
+    // stopTimeMillis = System.currentTimeMillis();
+    //
+    // logger.debug("---");
+    // logger.debug("Read: " + ((long) data.length * (Float.SIZE / 8)) +
+    // " bytes, at "
+    // + (((long) data.length * (Float.SIZE / 8) * 1000) / (double)
+    // (stopTimeMillis - startTimeMillis))
+    // / 1000000 + " MB/sec.");
+    //
+    // startTimeMillis = System.currentTimeMillis();
+    // Dimensions colormapDims;
+    // if (logScale) {
+    // colormapDims = new Dimensions((float)
+    // Math.log(settings.getCurrentVarMin(variableName) + 1f),
+    // (float) Math.log(settings.getCurrentVarMax(variableName) + 1f));
+    // for (int lat = 0; lat < lats; lat++) {
+    // for (int lon = lons - 1; lon >= 0; lon--) {
+    // Color color = JOCLColormapper.getColor(colorMapname, colormapDims,
+    // (float) Math.log(data[lat * lons + lon] + 1f),
+    // (float) Math.log(fillValues.get(variableName)));
+    // result.put((byte) (color.getRed() * 255));
+    // result.put((byte) (color.getGreen() * 255));
+    // result.put((byte) (color.getBlue() * 255));
+    // }
+    // }
+    // } else {
+    // colormapDims = new Dimensions(settings.getCurrentVarMin(variableName),
+    // settings.getCurrentVarMax(variableName));
+    // for (int lat = 0; lat < lats; lat++) {
+    // for (int lon = lons - 1; lon >= 0; lon--) {
+    // Color color = JOCLColormapper.getColor(colorMapname, colormapDims,
+    // data[lat * lons + lon],
+    // fillValues.get(variableName));
+    // result.put((byte) (color.getRed() * 255));
+    // result.put((byte) (color.getGreen() * 255));
+    // result.put((byte) (color.getBlue() * 255));
+    // }
+    // }
+    // }
+    // stopTimeMillis = System.currentTimeMillis();
+    // logger.debug("Colormap creation: : "
+    // + (((long) data.length * (Float.SIZE / 8) * 1000) / (double)
+    // (stopTimeMillis - startTimeMillis))
+    // / 1000000 + " MB/sec.");
+    //
+    // } catch (IOException e) {
+    // e.printStackTrace();
+    // } catch (InvalidRangeException e) {
+    // e.printStackTrace();
+    // }
+    //
+    // result.flip();
+    //
+    // return result;
+    // }
 
     public synchronized float[] getData(String variableName, int time) {
         Variable variable = variables.get(variableName);

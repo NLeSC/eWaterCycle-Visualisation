@@ -3,7 +3,6 @@ package nl.esciencecenter.visualization.ewatercycle;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import nl.esciencecenter.neon.swing.ColormapInterpreter;
 import nl.esciencecenter.neon.util.TypedProperties;
 import nl.esciencecenter.visualization.ewatercycle.data.SurfaceTextureDescription;
 
@@ -789,7 +788,7 @@ public class WaterCycleSettings {
         }
 
         if (colormap.compareTo("") == 0) {
-            colormap = ColormapInterpreter.getColormapNames()[0];
+            colormap = JOCLColormapper.getColormapNames()[0];
         }
 
         return colormap;
