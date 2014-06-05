@@ -3,6 +3,7 @@ package nl.esciencecenter.visualization.ewatercycle.data;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JSlider;
@@ -70,7 +71,7 @@ public class TimedPlayer implements Runnable {
         }
     }
 
-    private ArrayList<Orientation> orientationList;
+    private HashMap<Integer, Orientation> orientationMap;
 
     private final WaterCycleSettings settings = WaterCycleSettings.getInstance();
 
@@ -231,15 +232,22 @@ public class TimedPlayer implements Runnable {
                                 && numberOfFramesPassedBetweenTimesteps < settings.getNumberOfScreenshotsPerTimeStep()) {
                             int movieFrameNumber = (frameNumber * settings.getNumberOfScreenshotsPerTimeStep())
                                     + numberOfFramesPassedBetweenTimesteps;
-                            for (Orientation o : orientationList) {
-                                if (o.getFrameNumber() == movieFrameNumber) {
-                                    Float3Vector rotation = new Float3Vector(o.getRotation().getX(), o.getRotation()
-                                            .getY(), 0f);
-                                    float viewDist = o.getViewDist();
-                                    inputHandler.setRotation(rotation);
-                                    inputHandler.setViewDist(viewDist);
-                                }
-                            }
+                            // Orientation o =
+                            // orientationMap.get(movieFrameNumber);
+
+                            Float3Vector rotation = new Float3Vector(inputHandler.getRotation().getX(), inputHandler
+                                    .getRotation().getY() + 0.1f, 0f);
+
+                            // float viewDist = o.getViewDist();
+
+                            // System.out.println("Rot: " + movieFrameNumber +
+                            // " = " + rotation);
+                            // System.out.println("Dst: " + movieFrameNumber +
+                            // " = " + viewDist);
+
+                            inputHandler.setRotation(rotation);
+                            // inputHandler.setViewDist(viewDist);
+
                             if (currentState == states.MOVIEMAKING) {
                                 String ssFileName = String.format("%06d.png", movieFrameNumber);
                                 System.out.println("Writing screenshot: " + ssFileName);
@@ -378,7 +386,7 @@ public class TimedPlayer implements Runnable {
             }
         }
 
-        orientationList = new ArrayList<Orientation>();
+        orientationMap = new HashMap<Integer, Orientation>();
 
         ArrayList<Integer> intermediateFrameNumbers = new ArrayList<Integer>();
 
@@ -416,13 +424,11 @@ public class TimedPlayer implements Runnable {
                 Float3Vector endLocation = new Float3Vector(nextKeyFrame.getRotation().getX(), nextKeyFrame
                         .getRotation().getY(), 0f);
 
-                if (startLocation.getX() - endLocation.getX() < 0f) {
-                    startLocation.setX((startLocation.getX() + 360f) % 360f);
-                }
+                startLocation.setX(startLocation.getX() % 360f);
+                startLocation.setY(startLocation.getY() % 360f);
 
-                if (startLocation.getY() - endLocation.getY() < 0f) {
-                    startLocation.setY(startLocation.getY() + 360f);
-                }
+                endLocation.setX(endLocation.getX() % 360f);
+                endLocation.setY(endLocation.getY() % 360f);
 
                 Float3Vector still = new Float3Vector();
 
@@ -436,10 +442,11 @@ public class TimedPlayer implements Runnable {
                         still, endZoom);
 
                 for (int j = 0; j < numberOfInterpolationFrames; j++) {
-                    int currentFrameNumber = intermediateFrameNumbers.get(currentKeyFrame.getFrameNumber()
+                    int currentMovieFrameNumber = intermediateFrameNumbers.get(currentKeyFrame.getFrameNumber()
                             * settings.getNumberOfScreenshotsPerTimeStep() + j);
-                    Orientation newOrientation = new Orientation(currentFrameNumber, curveSteps[j], zoomSteps[j].getZ());
-                    orientationList.add(newOrientation);
+                    Orientation newOrientation = new Orientation(currentMovieFrameNumber, curveSteps[j],
+                            zoomSteps[j].getX());
+                    orientationMap.put(currentMovieFrameNumber, newOrientation);
                 }
             }
         }
@@ -504,13 +511,13 @@ public class TimedPlayer implements Runnable {
             // p[2] = p[2] % 360f;
             // p[3] = p[3] % 360f;
 
-            if (p[0] - p[3] < 0f) {
-                p[0] = p[0] + 360f;
-                p[1] = p[0];
-            } else if (p[0] + p[3] > 360f) {
-                p[0] = p[0] - 360f;
-                p[1] = p[0];
-            }
+            // if (p[0] - p[3] < 0f) {
+            // p[0] = p[0] + 360f;
+            // p[1] = p[0];
+            // } else if (p[0] + p[3] > 360f) {
+            // p[0] = p[0] - 360f;
+            // p[1] = p[0];
+            // }
 
             // p[0] = p[0] % 360f;
             // p[1] = p[1] % 360f;
@@ -535,9 +542,9 @@ public class TimedPlayer implements Runnable {
                 if (coord == 0) {
                     newBezierPoints[loop].setX(f % 360f);
                 } else if (coord == 1) {
-                    newBezierPoints[loop].setY(f % 360f);
+                    newBezierPoints[loop].setY(f);
                 } else if (coord == 2) {
-                    newBezierPoints[loop].setZ(f % 360f);
+                    newBezierPoints[loop].setZ(f);
                 }
 
                 f = f + fd + fdd_per_2 + fddd_per_6;

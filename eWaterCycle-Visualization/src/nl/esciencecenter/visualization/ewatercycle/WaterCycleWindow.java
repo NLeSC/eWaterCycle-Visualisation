@@ -447,6 +447,10 @@ public class WaterCycleWindow implements GLEventListener {
             if (cachedLegendTextures[i] != null && cachedSurfaceTextures[i] != null) {
                 drawSingleWindow(gl, mv, i, cachedLegendTextures[i], cachedSurfaceTextures[i],
                         cachedFrameBufferObjects[i], clickCoords);
+            } else if (cachedLegendTextures[i] == null) {
+                logger.debug("legend " + i + " null?");
+            } else if (cachedSurfaceTextures[i] == null) {
+                logger.debug("surface " + i + " null?");
             }
         }
 
