@@ -147,6 +147,8 @@ public class JOCLColormapper {
         this.width = width;
         this.height = height;
 
+        System.out.println("JOCLColormapper set to " + height + "x" + width);
+
         // Initialize OpenCL
         initCL(width, height);
     }
@@ -437,7 +439,7 @@ public class JOCLColormapper {
         ByteBuffer colorMap = Buffers.newDirectByteBuffer(finalSize * 4);
         int cmEntries = colors.size();
 
-        for (int i = 0; i < finalSize; i++) {
+        for (int i = finalSize - 1; i >= 0; i--) {
             float rawIndex = cmEntries * (i / (float) finalSize);
 
             int iLow = (int) Math.floor(rawIndex);
@@ -479,9 +481,9 @@ public class JOCLColormapper {
             int g = (int) (g0 + percentage * dg);
             int b = (int) (b0 + percentage * db);
 
-            colorMap.put((byte) (r));
-            colorMap.put((byte) (g));
-            colorMap.put((byte) (b));
+            colorMap.put((byte) (r & 0xFF));
+            colorMap.put((byte) (g & 0xFF));
+            colorMap.put((byte) (b & 0xFF));
             colorMap.put((byte) (255));
         }
 
@@ -602,9 +604,9 @@ public class JOCLColormapper {
 
             for (int col = 0; col < width; col++) {
                 for (int row = 0; row < height; row++) {
-                    raster.setSample(col, row, 0, legendImageBuffer[col][row].getBlue() * 255);
-                    raster.setSample(col, row, 1, legendImageBuffer[col][row].getGreen() * 255);
-                    raster.setSample(col, row, 2, legendImageBuffer[col][row].getRed() * 255);
+                    raster.setSample(col, row, 0, legendImageBuffer[col][row].getBlue());
+                    raster.setSample(col, row, 1, legendImageBuffer[col][row].getGreen());
+                    raster.setSample(col, row, 2, legendImageBuffer[col][row].getRed());
                 }
             }
 
@@ -649,11 +651,11 @@ public class JOCLColormapper {
 
             Color color;
             if (cmIndex == cmEntries) {
-                color = new Color(colorMap[cmEntries - 1]);
+                color = new Color(colorMap[cmEntries - 1], true);
             } else if (cmIndex < 0) {
-                color = new Color(colorMap[0]);
+                color = new Color(colorMap[0], true);
             } else {
-                color = new Color(colorMap[cmIndex]);
+                color = new Color(colorMap[cmIndex], true);
             }
 
             for (int row = 0; row < height; row++) {

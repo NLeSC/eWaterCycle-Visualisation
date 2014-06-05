@@ -794,7 +794,19 @@ public class WaterCycleWindow implements GLEventListener {
 
         // fontSize = (int) Math.round(w / 37.5);
 
-        initDatastores(gl);
+        for (int i = 0; i < cachedScreens; i++) {
+            cachedTextureDescriptions[i] = settings.getSurfaceDescription(i);
+
+            if (cachedFrameBufferObjects[i] != null) {
+                cachedFrameBufferObjects[i].delete(gl);
+            }
+            cachedFrameBufferObjects[i] = new FrameBufferObject(canvasWidth, canvasHeight, (GL.GL_TEXTURE6 + i));
+
+            logger.debug("Cached FrameBufferObject init nr: " + i);
+            cachedFrameBufferObjects[i].init(gl);
+        }
+
+        // initDatastores(gl);
 
         finalPBO.delete(gl);
         finalPBO = new IntPixelBufferObject(canvasWidth, canvasHeight);
